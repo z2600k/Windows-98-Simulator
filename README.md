@@ -1,6 +1,7 @@
 # Win 98 Simulator
 ## Originally developed by LR_Soft
 [Original source code](https://github.com/gottagofaster236/win-98-simulator-public)
+
 Windows 98 simulator for Android. You can download it [here](https://m.apkpure.com/win-98-simulator/com.lr_soft.windows98simulator).
 Features old games, Notepad, Internet Explorer, many other programs.
 
