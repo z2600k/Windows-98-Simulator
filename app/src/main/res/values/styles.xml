@@ -1,0 +1,11 @@
+<resources>
+    <style name="AppTheme" parent="Theme.Material3.Light.NoActionBar">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+    <style name="CheckBoxTheme">
+        <item name="buttonTint">@color/colorPrimary</item>
+    </style>
+</resources>

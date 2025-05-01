@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Windows 98</string>
+    <string name="how_to_use_the_mouse"><b>欢迎使用 Windows 98！查看以下信息以快速入门...</b></string>
+    <string name="to_move_the_mouse">• 要<b>移动</b>鼠标，<b>请滑动屏幕</b>\n\n• 要<b>左键单击</b>，请按<b>音量调高按钮</b>\n或<b>点击触摸屏</b>\n\n• 若要<b>右键单击</b>，请按<b>音量减小按钮</b></string>
+    <string name="show_on_startup">在启动时显示</string>
+    <string name="got_it">我知道了</string>
+    <string name="only_eng_keyboard_is_supported">目前只支持英文键盘</string>
+    <string name="unable_to_rename">只有“我的文档”文件夹和桌面上的文件才支持重命名。</string>
+    <string name="unable_to_delete">仅“我的文档”文件夹和桌面中的文件支持删除。</string>
+    <string name="wallpaper_no_files">在“画图”中绘制壁纸，或在顶部菜单上更改文件夹。</string>
+    <string name="mpc_no_files">您可以更改顶部菜单上的文件夹（或从Internet Explorer下载文件）。</string>
+    <string name="paint_tutorial">按住调高音量按钮绘制</string>
+    <string name="mpc_tutorial">要播放媒体，请点击“文件→打开”。</string>
+    <string name="freecell_tutorial">要开始游玩，请点击“游戏→开局”。</string>
+    <string name="crash_info">系统将在稍后重新启动。</string>
+</resources>
