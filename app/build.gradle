@@ -8,9 +8,9 @@ android {
         minSdkVersion 16
         targetSdkVersion 36
         versionCode 34
-        versionName "1.4.5"
+        versionName "1.4.5a"
     }
-    buildFeatures{buildConfig true}
+    buildFeatures{buildConfig = true}
     signingConfigs {
         release {
             keyAlias 'key0' // your key ailas name
@@ -21,11 +21,10 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
-            shrinkResources false
-            debuggable false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
+            minifyEnabled = false
+            shrinkResources = false
+            debuggable = false
+            signingConfig = signingConfigs.release
         }
     }
     compileOptions {
