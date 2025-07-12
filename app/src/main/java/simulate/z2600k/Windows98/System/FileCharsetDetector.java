@@ -78,7 +78,7 @@ public class FileCharsetDetector {
 
     public static byte[] readFileToBytes(File file) throws IOException {
         FileInputStream fis = new FileInputStream(file);
-        byte[] bytes = new byte[(int) file.length()];
+        byte[] bytes = new byte[10];
         fis.read(bytes);
         fis.close();
         return bytes;
