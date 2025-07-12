@@ -4,6 +4,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 
 import simulate.z2600k.Windows98.System.DummyWindow;
+import simulate.z2600k.Windows98.System.FileCharsetDetector;
 import simulate.z2600k.Windows98.System.MessageBox;
 import simulate.z2600k.Windows98.System.ScrollBar;
 import simulate.z2600k.Windows98.System.TextBox;
@@ -90,7 +91,7 @@ public class BaseNotepad extends DummyWindow implements FileDialog.ActionOnSave 
             @Override
             public void openFile(File file) {
                 boolean success = false;
-                try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"))){
+                try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), FileCharsetDetector.getFileCharsetName(file)))){
                     String line;
                     StringBuilder stringBuilder = new StringBuilder();
                     while((line = reader.readLine()) != null) {
