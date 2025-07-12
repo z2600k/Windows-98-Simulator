@@ -17,9 +17,7 @@ import android.graphics.Typeface;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.view.View;
-import android.widget.Toast;
 
-import com.google.android.material.snackbar.Snackbar;
 import simulate.z2600k.Windows98.Applications.AndroidApps;
 import simulate.z2600k.Windows98.Applications.Calculator;
 import simulate.z2600k.Windows98.Applications.DisplayProperties;
@@ -43,7 +41,6 @@ import simulate.z2600k.Windows98.Applications.WordPad;
 import simulate.z2600k.Windows98.MainActivity;
 import simulate.z2600k.Windows98.R;
 import simulate.z2600k.Windows98.WindowsView;
-import simulate.z2600k.Windows98.AndroidIcon;
 
 import java.io.File;
 import java.io.IOException;
@@ -377,7 +374,7 @@ public class Windows98 extends ElementContainer {
         Element.p_very_bold.setTypeface(tf_very_bold);
         Element.p_very_bold.setTextSize(21);
         Element.p_very_bold.setAntiAlias(false);
-        Typeface tf_fixedsys = Typeface.createFromAsset(assets,"Fixedsys 8pt.ttf");
+        Typeface tf_fixedsys = Typeface.createFromAsset(assets,"Fixedsys.ttf");
         Element.p_fixedsys = new Paint();
         Element.p_fixedsys.setTypeface(tf_fixedsys);
         Element.p_fixedsys.setTextSize(16);
