@@ -2,13 +2,13 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 36
-    namespace "simulate.z2600k.Windows98"
+    namespace = "simulate.z2600k.Windows98"
     defaultConfig {
         applicationId "simulate.z2600k.Windows98"
         minSdkVersion 16
         targetSdkVersion 36
-        versionCode 34
-        versionName "1.4.5a"
+        versionCode 35
+        versionName "1.4.6"
     }
     buildFeatures{buildConfig = true}
     signingConfigs {
