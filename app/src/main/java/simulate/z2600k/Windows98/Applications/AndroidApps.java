@@ -18,10 +18,9 @@ import android.os.Build;
 
 import androidx.annotation.Nullable;
 
-import simulate.z2600k.Windows98.R;
 import simulate.z2600k.Windows98.System.Windows98;
 import simulate.z2600k.Windows98.WindowsView;
-import simulate.z2600k.Windows98.AndroidIcon;
+import simulate.z2600k.Windows98.System.AndroidIcon;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,7 +42,7 @@ public class AndroidApps extends Explorer {
     private final static AndroidIcon androidIcon=new AndroidIcon();
 
     public AndroidApps(){
-        super("Android 应用", "Android Apps",androidIcon.GetAndroidLogo("Small"), androidIcon.GetAndroidLogo("Normal"), false);
+        super("Android 应用", "Android 应用",androidIcon.GetAndroidLogo("Small"), androidIcon.GetAndroidLogo("Normal"), false);
         helpText = defaultHelpText = "选定项目可以启动应用程序。";
         synchronized (apps) {
             for (AppInfo appInfo : apps) {
