@@ -38,7 +38,6 @@ import androidx.activity.OnBackPressedCallback;
 
 import com.google.android.material.color.DynamicColors;
 
-import simulate.z2600k.Windows98.Applications.ColorButton;
 import simulate.z2600k.Windows98.Applications.InternetExplorer;
 import simulate.z2600k.Windows98.Applications.MPlayer;
 import simulate.z2600k.Windows98.Applications.MyDocuments;
@@ -134,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
             t2.setTypeface(coolTf);
             t3.setTypeface(coolTf);
             b.setTypeface(coolTf);
-            b.setBackgroundColor(Build.VERSION.SDK_INT>=23 ? getColor(R.color.colorPrimary) : Color.parseColor("#008577"));
+            b.setBackgroundColor(Build.VERSION.SDK_INT_FULL>=Build.VERSION_CODES_FULL.M ? getColor(R.color.colorPrimary) : Color.parseColor("#008577"));
             tutorial.setVisibility(View.VISIBLE);
             windowsViewGroup.setVisibility(View.GONE);
         }
@@ -207,9 +206,9 @@ public class MainActivity extends AppCompatActivity {
     public void checkWriteExternalPermission(PermissionResultListener listener){
         if(!MyDocuments.externalStorageAvailable())
             listener.onPermissionDenied();
-        else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+        else if (Build.VERSION.SDK_INT_FULL < Build.VERSION_CODES_FULL.M)
             listener.onPermissionGranted();
-        else if(Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+        else if(Build.VERSION.SDK_INT_FULL < Build.VERSION_CODES_FULL.R) {
             if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     == PackageManager.PERMISSION_GRANTED) {
                 listener.onPermissionGranted();
@@ -254,7 +253,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode != 1 || permissionResultListener == null || Build.VERSION.SDK_INT < 30)
+        if (requestCode != 1 || permissionResultListener == null || Build.VERSION.SDK_INT_FULL < Build.VERSION_CODES_FULL.R)
             return;
         if (Environment.isExternalStorageManager())
             permissionResultListener.onPermissionGranted();
@@ -288,7 +287,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if(Build.VERSION.SDK_INT >= 24) {
+        if(Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.N) {
             WindowsView.windowsView.setPointerIcon(WindowsView.windowsCursor);
         }
         if(Windows98.state == Windows98.WORKING) {
@@ -300,7 +299,7 @@ public class MainActivity extends AppCompatActivity {
     // (c) https://stackoverflow.com/a/23861333/6120487
     public static void getScreenSize(Point point){
         Display display = context.getWindowManager().getDefaultDisplay();
-        if (Build.VERSION.SDK_INT >= 17) {
+        if (Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.JELLY_BEAN_MR1) {
             DisplayMetrics realMetrics = new DisplayMetrics();
             display.getRealMetrics(realMetrics);
             point.x = realMetrics.widthPixels;
@@ -336,9 +335,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void hideSystemUI() {
-        if(Build.VERSION.SDK_INT < 19)
+        if(Build.VERSION.SDK_INT_FULL < Build.VERSION_CODES_FULL.KITKAT)
             return;
-        if(Build.VERSION.SDK_INT < 30) {
+        if(Build.VERSION.SDK_INT_FULL < Build.VERSION_CODES_FULL.R) {
             getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
                     View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
                     View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
@@ -364,7 +363,7 @@ public class MainActivity extends AppCompatActivity {
     };
 
     public void delayedHide(int delayMillis) {
-        if(Build.VERSION.SDK_INT >= 30)
+        if(Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.R)
             return;
         mHideHandler.removeMessages(0);
         mHideHandler.sendEmptyMessageDelayed(0, delayMillis);
