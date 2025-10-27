@@ -113,7 +113,7 @@ public class AndroidApps extends Explorer {
                     Drawable drawable = resolveInfo.loadIcon(packageManager);
                     bitmap = createBitmap(32, 32, Bitmap.Config.ARGB_8888);
                     Canvas canvas = new Canvas(bitmap);
-                    if (Build.VERSION.SDK_INT >= 26 && drawable instanceof AdaptiveIconDrawable && !packageName.equals("com.android.chrome")) {
+                    if (Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.O && drawable instanceof AdaptiveIconDrawable && !packageName.equals("com.android.chrome")) {
                         // у хрома пусть будет круглая иконка
                         AdaptiveIconDrawable adaptive = (AdaptiveIconDrawable) drawable;
                         Drawable background = adaptive.getBackground(), foreground = adaptive.getForeground();
@@ -236,7 +236,7 @@ public class AndroidApps extends Explorer {
             return;
         monitoringStarted = true;
         loadAppInfo();
-        if(Build.VERSION.SDK_INT < 26){
+        if(Build.VERSION.SDK_INT_FULL < Build.VERSION_CODES_FULL.O){
             BroadcastReceiver installReceiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
