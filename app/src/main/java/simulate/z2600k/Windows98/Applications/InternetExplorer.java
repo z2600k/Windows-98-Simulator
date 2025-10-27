@@ -25,6 +25,8 @@ import android.webkit.URLUtil;
 import android.webkit.WebBackForwardList;
 import android.webkit.WebHistoryItem;
 
+import androidx.core.content.ContextCompat;
+
 import simulate.z2600k.Windows98.MainActivity;
 import simulate.z2600k.Windows98.MyWebView;
 import simulate.z2600k.Windows98.R;
@@ -107,10 +109,10 @@ public class InternetExplorer extends DummyWindow {
         urlAddressEdit.enterRunnable = this::go;
         addElement(urlAddressEdit);
         // собственно, интернет
-        webViewContainer = new WebViewContainer(new RelativeBounds(6, 120, -22, -42), this);
+        webViewContainer = new WebViewContainer(new RelativeBounds(6, 119, -24, -44), this);
         addElement(webViewContainer);
-        webViewContainer.verticalScrollBar = new ScrollBar(webViewContainer, new RelativeBounds(-22, 120, -6, -42), true);
-        webViewContainer.horizontalScrollBar = new ScrollBar(webViewContainer, new RelativeBounds(6, -42, -22, -26), false);
+        webViewContainer.verticalScrollBar = new ScrollBar(webViewContainer, new RelativeBounds(-24, 119, -6, -44), true);
+        webViewContainer.horizontalScrollBar = new ScrollBar(webViewContainer, new RelativeBounds(6, -44, -24, -26), false);
         addElement(webViewContainer.verticalScrollBar);
         addElement(webViewContainer.horizontalScrollBar);
         if(loadHomePage) {
@@ -258,7 +260,7 @@ public class InternetExplorer extends DummyWindow {
             super.onNewDraw(canvas, x, y);
             if(!downloadComplete) {
                 movieCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-                if (android.os.Build.VERSION.SDK_INT < 28) {
+                if (Build.VERSION.SDK_INT_FULL < Build.VERSION_CODES_FULL.P) {
                     if (downloadStartTime != -1)
                         oldMovie.setTime((int) (System.currentTimeMillis() - downloadStartTime) % oldMovie.duration());
                     oldMovie.draw(movieCanvas, 0, 0); //, x + 14, y + 22);
@@ -322,8 +324,8 @@ public class InternetExplorer extends DummyWindow {
                 c.close();
                 return;
             }
-            long size = c.getLong(c.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
-            long downloadedBytes = c.getLong(c.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
+            long size = c.getLong(c.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
+            long downloadedBytes = c.getLong(c.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
             c.close();
             //if(size == -1)
             //    return;
@@ -360,7 +362,7 @@ public class InternetExplorer extends DummyWindow {
                 c.close();
                 return;
             }
-            int downloadStatus = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS));
+            int downloadStatus = c.getInt(c.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
             /*int downloadedBytes = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
             int size = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
             if(downloadStatus == DownloadManager.STATUS_SUCCESSFUL || downloadedBytes == size){
@@ -368,7 +370,7 @@ public class InternetExplorer extends DummyWindow {
             }
             else */
             if(downloadStatus == DownloadManager.STATUS_FAILED){
-                int reason = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_REASON));
+                int reason = c.getInt(c.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON));
                 /*if(reason == DownloadManager.ERROR_CANNOT_RESUME){
                     File file = new File(MyDocuments.getFilesDir().getAbsolutePath() + File.separator + filename);
                     if(file.exists()){
@@ -453,7 +455,7 @@ public class InternetExplorer extends DummyWindow {
             super("文件下载", null, 374, 261, false, false, false);
             // инициализируем элементы
             unableToMaximize = true;
-            if (android.os.Build.VERSION.SDK_INT < 28) {
+            if (Build.VERSION.SDK_INT_FULL < Build.VERSION_CODES_FULL.P) {
                 oldMovie = Movie.decodeStream(resources.openRawResource(R.drawable.tshell32_170));
             }
             else{
@@ -486,8 +488,8 @@ public class InternetExplorer extends DummyWindow {
             defaultButton.coolActive = true;
             addElement(defaultButton);
             closeOnDownloadComplete = new CheckBox("下载完毕后关闭该对话框");
-            closeOnDownloadComplete.x = 14;
-            closeOnDownloadComplete.y = 188;
+            closeOnDownloadComplete.x = 17;
+            closeOnDownloadComplete.y = 191;
             addElement(closeOnDownloadComplete);
             centerWindowOnScreen();
             this.url = url.substring(url.indexOf('/') + 2);  // http(s)://
@@ -513,7 +515,7 @@ public class InternetExplorer extends DummyWindow {
             new FileDialog(false, extension, extensionDescription, this, new FileDialog.OnResultListener() {
                 @Override
                 public void writeToFile(final File file) {
-                    if(Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                    if(Build.VERSION.SDK_INT_FULL < Build.VERSION_CODES_FULL.Q) {
                         context.checkWriteExternalPermission(new MainActivity.PermissionResultListener() {
                              @Override
                              public void onPermissionGranted() {
@@ -549,9 +551,9 @@ public class InternetExplorer extends DummyWindow {
             String cookies = CookieManager.getInstance().getCookie(url);
             request.addRequestHeader("Cookie", cookies);
             request.addRequestHeader("User-Agent", userAgent);
-            request.setDescription("Win 98 Download");
+            request.setDescription("Windows 98 Downloads");
             request.setTitle(filename);
-            if(Build.VERSION.SDK_INT < 29) {
+            if(Build.VERSION.SDK_INT_FULL < Build.VERSION_CODES_FULL.Q) {
                 request.allowScanningByMediaScanner();
                 request.setVisibleInDownloadsUi(false);
             }
@@ -591,7 +593,7 @@ public class InternetExplorer extends DummyWindow {
                         Cursor c = ((DownloadManager) context.getSystemService(DOWNLOAD_SERVICE)).query(query);
                         long size = 0;
                         if(c.moveToFirst())
-                            size = c.getLong(c.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
+                            size = c.getLong(c.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
                         c.close();
                         // переиспользуем те же строки
                         timeLeft = bytesToString(size) + "(共 " + secondsToString(Math.round(downloadTime));
@@ -601,7 +603,7 @@ public class InternetExplorer extends DummyWindow {
                     }
                 }
             };
-            context.registerReceiver(onDownloadComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+            ContextCompat.registerReceiver(context, onDownloadComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), ContextCompat.RECEIVER_EXPORTED);
 
             Uri myDownloads = Uri.parse("content://downloads/my_downloads");
             contentObserver = new ContentObserver(new Handler()) {
@@ -622,14 +624,14 @@ public class InternetExplorer extends DummyWindow {
 
         private void startAnimation(){
             WindowsView.handler.postDelayed(updateRunnable, 70);
-            if(android.os.Build.VERSION.SDK_INT >= 28)
+            if(Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.P)
                 newMovie.start();
             downloadStartTime = System.currentTimeMillis();
         }
 
         private void stopAnimation(){
             WindowsView.handler.removeCallbacks(updateRunnable);
-            if(android.os.Build.VERSION.SDK_INT >= 28)
+            if(Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.P)
                 newMovie.stop();
         }
 
