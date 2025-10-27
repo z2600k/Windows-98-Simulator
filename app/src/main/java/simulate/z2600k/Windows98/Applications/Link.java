@@ -135,7 +135,7 @@ public class Link extends ElementContainer implements DropdownList.Item {
                 else if ("apk".equals(extension)) {
                     Intent installIntent = new Intent(Intent.ACTION_VIEW);
                     installIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    if (Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.N) {
                         installIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                         Uri contentUri = FileProvider.getUriForFile(context,
                                 "simulate.z2600k.Windows98.fileProvider", path);
