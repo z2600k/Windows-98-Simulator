@@ -873,7 +873,7 @@ public class Windows98 extends ElementContainer {
 
     public static void setCursor(Cursor cursor) {
         Windows98.cursor = cursor;
-        if(Windows98.TAUON && Build.VERSION.SDK_INT >= 24){
+        if(Windows98.TAUON && Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.N){
             WindowsView.windowsCursor = cursor.getPointerIcon();
             WindowsView.windowsView.setPointerIcon(WindowsView.windowsCursor);
         }
