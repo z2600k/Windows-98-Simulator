@@ -9,6 +9,7 @@ import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.view.Surface;
 import android.view.TextureView;
 import android.widget.Toast;
@@ -465,7 +466,7 @@ public class MPlayer extends Window {
             if(!hasContent)
                 return;
             long ms = Math.round(realPos * mediaPlayer.getDuration());
-            if(android.os.Build.VERSION.SDK_INT >= 26)
+            if(Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.O)
                 mediaPlayer.seekTo(ms, MediaPlayer.SEEK_CLOSEST);
             else
                 mediaPlayer.seekTo((int) ms);
