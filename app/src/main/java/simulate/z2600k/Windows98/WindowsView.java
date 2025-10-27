@@ -75,7 +75,7 @@ public class WindowsView extends View {
     VelocityTracker velocityTracker = VelocityTracker.obtain();
     public static PointerIcon windowsCursor;  // TYPE_NULL в обычном случае, либо картинка курсора в случае TAUON
     static{
-        if(Build.VERSION.SDK_INT >= 24)
+        if(Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.N)
             windowsCursor = PointerIcon.getSystemIcon(context, PointerIcon.TYPE_NULL);
     }
 
@@ -84,7 +84,7 @@ public class WindowsView extends View {
 
     public WindowsView(final Context context, AttributeSet attrs){
         super(context, attrs);
-        if(Build.VERSION.SDK_INT >= 26)
+        if(Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.O)
             setDefaultFocusHighlightEnabled(false);
         p.setAntiAlias(true);
         p.setFilterBitmap(true);
@@ -92,7 +92,7 @@ public class WindowsView extends View {
         windowsView = this;
         handler.removeCallbacks(update);
         handler.post(update);
-        if(Build.VERSION.SDK_INT >= 24)
+        if(Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.N)
             setPointerIcon(windowsCursor);
         if(bsodBitmap == null)
             bsodBitmap = getBmp(R.drawable.bsod);
@@ -211,7 +211,7 @@ public class WindowsView extends View {
                 lastRightPressed = rightPressed;
                 int x = (int) ((event.getX() - position.left) / (position.right - position.left) * Windows98.SCREEN_WIDTH);
                 int y = (int) ((event.getY() - position.top) / (position.bottom - position.top) * Windows98.SCREEN_HEIGHT);
-                if(Build.VERSION.SDK_INT >= 24) {
+                if(Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.N) {
                     // снаружи курсор - стрелочка; внутри - ничего (так как мы сами отрисовываем курсор)
                     boolean outside = x < 0 || x >= Windows98.SCREEN_WIDTH || y < 0 || y >= Windows98.SCREEN_HEIGHT;
                     if(Windows98.TAUON)
@@ -466,7 +466,7 @@ public class WindowsView extends View {
     }
 
     public void hideCustomCursor(){
-        if(Windows98.TAUON && Build.VERSION.SDK_INT >= 24) {
+        if(Windows98.TAUON && Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.N) {
             windowsCursor = PointerIcon.getSystemIcon(context, PointerIcon.TYPE_NULL);
             setPointerIcon(windowsCursor);
         }
@@ -545,31 +545,25 @@ public class WindowsView extends View {
 
         @Override
         public Editable getEditable() {
-            if(Build.VERSION.SDK_INT >= 14) {
-                if(myEditable == null) {
-                    myEditable = new EditableAccomodatingLatinIMETypeNullIssues(
+            if(myEditable == null) {
+                myEditable = new EditableAccomodatingLatinIMETypeNullIssues(
+                        EditableAccomodatingLatinIMETypeNullIssues.ONE_UNPROCESSED_CHARACTER);
+                Selection.setSelection(myEditable, 1);
+            }
+            else {
+                int myEditableLength = myEditable.length();
+                if(myEditableLength == 0) {
+                    myEditable.append(
                             EditableAccomodatingLatinIMETypeNullIssues.ONE_UNPROCESSED_CHARACTER);
                     Selection.setSelection(myEditable, 1);
                 }
-                else {
-                    int myEditableLength = myEditable.length();
-                    if(myEditableLength == 0) {
-                        myEditable.append(
-                                EditableAccomodatingLatinIMETypeNullIssues.ONE_UNPROCESSED_CHARACTER);
-                        Selection.setSelection(myEditable, 1);
-                    }
-                }
-                return myEditable;
             }
-            else {
-                return super.getEditable();
-            }
+            return myEditable;  // minSdkVersion is 16, return super.getEditable() not needed.
         }
         @Override
         public boolean deleteSurroundingText(int beforeLength, int afterLength) {
-            if((Build.VERSION.SDK_INT >= 14) // && (Build.VERSION.SDK_INT < 19)
-                    && (beforeLength == 1 && afterLength == 0)) {
-                //Send Backspace key down and up events to replace the ones omitted
+            if(beforeLength == 1 && afterLength == 0) {
+				//Send Backspace key down and up events to replace the ones omitted
                 // by the LatinIME keyboard.
                 return super.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DEL))
                         && super.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DEL));
