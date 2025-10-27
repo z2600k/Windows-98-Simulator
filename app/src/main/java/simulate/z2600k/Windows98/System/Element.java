@@ -567,6 +567,7 @@ public abstract class Element {
         } else {
             tv.setGravity(Gravity.CENTER_HORIZONTAL);
         }
+        snackbar.setAnimationMode(BaseTransientBottomBar.ANIMATION_MODE_FADE);
         snackbar.show();
     }
 
