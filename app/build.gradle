@@ -7,8 +7,8 @@ android {
         applicationId "simulate.z2600k.Windows98"
         minSdkVersion 16
         targetSdkVersion 36
-        versionCode 36
-        versionName "1.4.6a"
+        versionCode 38
+        versionName '1.5.1'
     }
     buildFeatures{buildConfig = true}
     signingConfigs {
@@ -24,13 +24,14 @@ android {
             minifyEnabled = false
             shrinkResources = false
             debuggable = false
-            signingConfig = signingConfigs.release
         }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+    buildToolsVersion '36.1.0'
+    compileSdkMinor = 1
 }
 
 dependencies {
