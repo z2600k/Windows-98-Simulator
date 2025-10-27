@@ -9,65 +9,65 @@ import simulate.z2600k.Windows98.R;
 public class AndroidIcon {
     public int androidLogo,androidLogoSmall;
     public int GetAndroidLogo(String Size){
-        int sdkVersion= Build.VERSION.SDK_INT;
+        int sdkVersion= Build.VERSION.SDK_INT_FULL;
         switch(sdkVersion){
-            case 16,17,18:
+            case 1600000,1700000,1800000:
                 androidLogo= R.drawable.android_sdk16;
                 androidLogoSmall=R.drawable.android_sdk16_small;
                 break;
-            case 19,20:
+            case 1900000,2000000:
                 androidLogo=R.drawable.android_sdk19;
                 androidLogoSmall=R.drawable.android_sdk19_small;
                 break;
-            case 21,22:
+            case 2100000,2200000:
                 androidLogo=R.drawable.android_sdk21;
                 androidLogoSmall=R.drawable.android_sdk21_small;
                 break;
-            case 23:
+            case 2300000:
                 androidLogo=R.drawable.android_sdk23;
                 androidLogoSmall=R.drawable.android_sdk23_small;
                 break;
-            case 24,25:
+            case 2400000,2500000:
                 androidLogo=R.drawable.android_sdk24;
                 androidLogoSmall=R.drawable.android_sdk24_small;
                 break;
-            case 26:
+            case 2600000:
                 androidLogo=R.drawable.android_sdk26;
                 androidLogoSmall=R.drawable.android_sdk26_small;
                 break;
-            case 27:
+            case 2700000:
                 androidLogo=R.drawable.android_sdk27;
                 androidLogoSmall=R.drawable.android_sdk27_small;
                 break;
-            case 28:
+            case 2800000:
                 androidLogo=R.drawable.android_sdk28;
                 androidLogoSmall=R.drawable.android_sdk28_small;
                 break;
-            case 29:
+            case 2900000:
                 androidLogo=R.drawable.android_sdk29;
                 androidLogoSmall=R.drawable.android_sdk29_small;
                 break;
-            case 30:
+            case 3000000:
                 androidLogo=R.drawable.android_sdk30;
                 androidLogoSmall=R.drawable.android_sdk30_small;
                 break;
-            case 31,32:
+            case 3100000,3200000:
                 androidLogo=R.drawable.android_sdk31;
                 androidLogoSmall=R.drawable.android_sdk31_small;
                 break;
-            case 33:
+            case 3300000:
                 androidLogo=R.drawable.android_sdk33;
                 androidLogoSmall=R.drawable.android_sdk33_small;
                 break;
-            case 34:
+            case 3400000:
                 androidLogo=R.drawable.android_sdk34;
                 androidLogoSmall=R.drawable.android_sdk34_small;
                 break;
-            case 35:
+            case 3500000:
                 androidLogo=R.drawable.android_sdk35;
                 androidLogoSmall=R.drawable.android_sdk35_small;
                 break;
-            case 36:
+            case 3600000,3600001:
                 androidLogo=R.drawable.android_sdk36;
                 androidLogoSmall=R.drawable.android_sdk36_small;
                 break;
