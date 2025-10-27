@@ -70,10 +70,7 @@ public class WebViewContainer extends ViewContainer implements Scrollable {
         webView = (MyWebView) getView();
         webView.parent = this;
 
-        if (android.os.Build.VERSION.SDK_INT >= 16)
-            webView.setBackground(null);
-        else
-            webView.setBackgroundDrawable(null);
+        webView.setBackground(null);    // minSdkVersion is 16, webView.setBackgroundDrawable not needed.
 
         webView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
         webView.setScrollbarFadingEnabled(false);
@@ -87,7 +84,7 @@ public class WebViewContainer extends ViewContainer implements Scrollable {
         webView.getSettings().setSupportMultipleWindows(true);
         webView.setInitialScale((int)(scale * 100));
 
-        if(Build.VERSION.SDK_INT >= 21)
+        if(Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.LOLLIPOP)
             CookieManager.getInstance().setAcceptThirdPartyCookies(webView,true);
 
 
@@ -97,7 +94,7 @@ public class WebViewContainer extends ViewContainer implements Scrollable {
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setAllowFileAccess(true);
         webView.getSettings().setDomStorageEnabled(true);
-        if(android.os.Build.VERSION.SDK_INT >= 17)
+        if(Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.JELLY_BEAN_MR1)
             webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
 
         webChromeClient = new MyWebChromeClient();
