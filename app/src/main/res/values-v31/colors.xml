@@ -3,4 +3,7 @@
     <color name="colorPrimary">@android:color/system_accent1_400</color>
     <color name="colorPrimaryDark">@android:color/system_accent1_200</color>
     <color name="colorAccent">@android:color/system_neutral1_400</color>
+    <color name="colorBackground">@android:color/system_accent1_50</color>
+    <color name="colorText">@android:color/system_accent1_800</color>
+    <color name="colorTextDark">@android:color/system_accent1_50</color>
 </resources>
