@@ -27,7 +27,7 @@ public class Cursor {
         this.bitmap = bitmap;
         this.x = x;
         this.y = y;
-        if(Windows98.TAUON && Build.VERSION.SDK_INT >= 24){
+        if(Windows98.TAUON && Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.N){
             Point size = new Point();
             MainActivity.getScreenSize(size);
             coefficient = size.y / 480f;
@@ -53,7 +53,7 @@ public class Cursor {
 
     @TargetApi(24)
     public void recreatePointerIcon(){
-        scaledBmp = scaledBmp.copy(Build.VERSION.SDK_INT >= 26? Bitmap.Config.HARDWARE : Bitmap.Config.ARGB_8888, false);
+        scaledBmp = scaledBmp.copy(Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.O ? Bitmap.Config.HARDWARE : Bitmap.Config.ARGB_8888, false);
         pointerIcon = PointerIcon.create(scaledBmp, x * coefficient, y * coefficient);
         Windows98.setCursor(this);
     }
