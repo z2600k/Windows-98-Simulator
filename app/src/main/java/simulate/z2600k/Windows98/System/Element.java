@@ -16,12 +16,12 @@ import android.os.Build;
 import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.google.android.material.snackbar.Snackbar;
 import simulate.z2600k.Windows98.MainActivity;
+import simulate.z2600k.Windows98.R;
 import simulate.z2600k.Windows98.WindowsView;
 
 import java.io.File;
@@ -558,7 +558,11 @@ public abstract class Element {
         FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) snackbarView.getLayoutParams();
         layoutParams.width = windowsView.getWidth();
         TextView tv = snackbarView.findViewById(com.google.android.material.R.id.snackbar_text);
-        if (Build.VERSION.SDK_INT >= 23){
+        if (Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.LOLLIPOP) {
+            snackbar.setBackgroundTint(context.getResources().getColor(R.color.colorBackground));
+            tv.setTextColor(context.getResources().getColor(R.color.colorText));
+        }
+        if (Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.M){
             tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
         } else {
             tv.setGravity(Gravity.CENTER_HORIZONTAL);
