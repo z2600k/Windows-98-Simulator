@@ -82,7 +82,7 @@ public class ViewContainer extends Element {
     }
 
     private static void updateLayoutIfNeeded(){
-        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT){
+        if(Build.VERSION.SDK_INT_FULL < Build.VERSION_CODES_FULL.KITKAT){
             updateLayout();
         }
     }
