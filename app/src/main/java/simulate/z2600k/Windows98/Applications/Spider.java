@@ -184,7 +184,7 @@ public class Spider extends BaseSolitaire {
         p.setColor(Color.rgb(0, 127, 0));
         canvas.drawRect(scoreWindow.left + 1, scoreWindow.top + 1,
                 scoreWindow.right - 1, scoreWindow.bottom - 1, p);
-        p_system.setColor(Color.WHITE);
+        p_system.setColor(Color.rgb(255,255,255));
         canvas.drawText("分数:", scoreWindow.left + 64, scoreWindow.top + 43, p_game);
         canvas.drawText(String.valueOf(score), scoreWindow.left + 111, scoreWindow.top + 43, p_system);
         canvas.drawText("操作:", scoreWindow.left + 64, scoreWindow.top + 63, p_game);
