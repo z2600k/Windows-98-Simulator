@@ -26,7 +26,8 @@
         android:requestLegacyExternalStorage="true"
         android:preserveLegacyExternalStorage="true"
         android:enableOnBackInvokedCallback="true"
-        tools:targetApi="36">
+        android:localeConfig="@xml/locales_config"
+        tools:targetApi="37">
         <!-- android:screenOrientation="landscape" -->
         <activity
             android:name=".MainActivity"
