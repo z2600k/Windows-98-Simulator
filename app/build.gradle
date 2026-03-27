@@ -1,14 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 36
+    compileSdkVersion 37
     namespace = "simulate.z2600k.Windows98"
     defaultConfig {
         applicationId "simulate.z2600k.Windows98"
         minSdkVersion 16
-        targetSdkVersion 36
-        versionCode 38
-        versionName '1.5.1'
+        targetSdkVersion 37
+        versionCode 41
+        versionName '1.6.0'
     }
     buildFeatures{buildConfig = true}
     signingConfigs {
@@ -30,8 +30,7 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-    buildToolsVersion '36.1.0'
-    compileSdkMinor = 1
+    buildToolsVersion '37.0.0 rc2'
 }
 
 dependencies {
