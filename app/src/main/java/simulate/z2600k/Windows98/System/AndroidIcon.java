@@ -71,6 +71,10 @@ public class AndroidIcon {
                 androidLogo=R.drawable.android_sdk36;
                 androidLogoSmall=R.drawable.android_sdk36_small;
                 break;
+            case 3700000:
+                androidLogo=R.drawable.android_sdk37;
+                androidLogoSmall=R.drawable.android_sdk37_small;
+                break;
             default:
                 androidLogo=R.drawable.android;
                 androidLogoSmall=R.drawable.android_small;
