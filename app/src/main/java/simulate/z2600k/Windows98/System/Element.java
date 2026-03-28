@@ -361,13 +361,16 @@ public abstract class Element {
             }
             String word = words.get(i);
             if(result.size() == linesLimit - 1){  // это последняя строчка, её делаем по-другому
-                String leftWords = curLine + word;
+                // String leftWords = curLine + word;
+                StringBuilder leftWords = new StringBuilder(curLine + word);
                 i++;
                 while(i < words.size()){
-                    leftWords += words.get(i);
+                    // leftWords += words.get(i);
+                    leftWords.append(words.get(i));
                     i++;
                 }
-                result.add(shortenTextToThreeDots(leftWords, widthLimit, p));
+                // result.add(shortenTextToThreeDots(leftWords, widthLimit, p));
+                result.add(shortenTextToThreeDots(leftWords.toString(), widthLimit, p));
                 curLine.setLength(0);
                 break;
             }
