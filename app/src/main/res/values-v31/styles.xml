@@ -9,6 +9,6 @@
     </style>
     <style name="CheckBoxTheme">
         <item name="buttonTint">@color/colorPrimary</item>
-        <item name="buttonIconTint">@color/colorBackground</item>
+        <item name="buttonIconTint">@color/colorTextDark</item>
     </style>
 </resources>
