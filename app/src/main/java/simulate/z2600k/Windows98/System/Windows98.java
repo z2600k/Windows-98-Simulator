@@ -55,7 +55,7 @@ TODO
      Придумать что-нибудь с IE
      Make some buttons in WordPad work (such as New File, Open, Save, and Print -> Installing a printer) сделать ImageButton (принимает полупрозрачное ищобр
 	 оптимизировать блокнот, т. к. моноширинный шрифт (например с помощью custom paint)
-     исправить курсор в переименовании на жирный
+     исправить курсор в переименовании на жирный（complete）
      корзина (копировать в корзину нельзя; что если восстанавливаем файл из удаленной папки?)
      2) Mouse speed in control panel
      3) Users
