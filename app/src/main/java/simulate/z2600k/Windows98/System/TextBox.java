@@ -268,7 +268,7 @@ public class TextBox extends Element implements Scrollable {
             if((maxTextLength == -1 || new_text.length() <= maxTextLength)  // различные проверки
                     && (!isNumeric || Character.isDigit(key.charAt(0)))) {
                 text = new_text;
-                cursor_pos++;
+                cursor_pos += key.length();
             }
             else if(maxTextLength != -1 && text.length() > maxTextLength){  // текст изначально был больше, чем лимит (например, из-за setText(имя файла))
                 text = text.substring(0, maxTextLength);
@@ -491,6 +491,7 @@ public class TextBox extends Element implements Scrollable {
     public void setCursorPos(int cursor_pos){
         this.cursor_pos = cursor_pos;
         Point cursor = getCursorIndices(cursor_pos);
+        assert cursor != null;
         cursor_line = cursor.x;
         cursor_symbol = cursor.y;
     }
