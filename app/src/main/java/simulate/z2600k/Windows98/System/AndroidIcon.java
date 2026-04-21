@@ -9,8 +9,7 @@ import simulate.z2600k.Windows98.R;
 public class AndroidIcon {
     public int androidLogo,androidLogoSmall;
     public int GetAndroidLogo(String Size){
-        int sdkVersion= Build.VERSION.SDK_INT_FULL;
-        switch(sdkVersion){
+        switch(Build.VERSION.SDK_INT_FULL){
             case 1600000,1700000,1800000:
                 androidLogo= R.drawable.android_sdk16;
                 androidLogoSmall=R.drawable.android_sdk16_small;
