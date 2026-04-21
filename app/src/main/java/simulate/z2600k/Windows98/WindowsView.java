@@ -35,6 +35,8 @@ import static simulate.z2600k.Windows98.System.Element.getBmp;
 import static simulate.z2600k.Windows98.System.Element.makeSnackbar;
 import static simulate.z2600k.Windows98.System.Windows98.windows98;
 
+import androidx.annotation.NonNull;
+
 import com.google.android.material.snackbar.Snackbar;
 
 public class WindowsView extends View {
@@ -86,7 +88,7 @@ public class WindowsView extends View {
         super(context, attrs);
         if(Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.O)
             setDefaultFocusHighlightEnabled(false);
-        p.setAntiAlias(true);
+        p.setAntiAlias(false);
         p.setFilterBitmap(true);
         p.setDither(true);
         windowsView = this;
@@ -99,10 +101,7 @@ public class WindowsView extends View {
     }
 
     @Override
-    protected void onDraw(Canvas canvas_big) {
-        if(canvas_big == null) {
-            return;
-        }
+    protected void onDraw(@NonNull Canvas canvas_big) {
         if(windows98 == null && !isBSOD)
             return;
         screen_width = getWidth();
@@ -123,6 +122,7 @@ public class WindowsView extends View {
         if(isBSOD)
             aspectRatio = (float) bsodBitmap.getWidth() / bsodBitmap.getHeight();
         else {
+			assert Windows98.windows98 != null;
             Windows98.windows98.getSrc(src);
             aspectRatio = (float) src.width() / src.height();
         }
@@ -143,11 +143,6 @@ public class WindowsView extends View {
             p.setColor(Color.BLACK);
             canvas_big.drawRect(0, 0, screen_width, position.top, p);
             canvas_big.drawRect(0, position.bottom, screen_width, screen_height, p);
-        }
-        if(false){  // рястягиваем экран
-            position.left = 0; position.top = 0;
-            position.right = (int) screen_width;
-            position.bottom = (int) screen_height;
         }
 
         if(!isBSOD)
@@ -175,7 +170,7 @@ public class WindowsView extends View {
 
     @SuppressLint({"WrongCall", "MissingSuperCall"})
     @Override
-    public void draw(Canvas canvas) {  // чтобы не было оранжевой рамки фокуса
+    public void draw(@NonNull Canvas canvas) {  // чтобы не было оранжевой рамки фокуса
         onDraw(canvas);
     }
 
@@ -490,11 +485,13 @@ public class WindowsView extends View {
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if(Windows98.windows98 == null)
             return true;
-        /*if(event.getKeyCode() == KeyEvent.KEYCODE_BACK){
+        /*
+		if(event.getKeyCode() == KeyEvent.KEYCODE_BACK){
             onRightUp();
             onRightDown();
             return true;
-        }*/
+        }
+		*/
         if(event.getAction() != KeyEvent.ACTION_DOWN)
             return true;
         String key;
@@ -518,21 +515,17 @@ public class WindowsView extends View {
     public boolean onKeyMultiple(int keyCode, int repeatCount, KeyEvent event) {
         if(Windows98.windows98 == null)
             return true;
-        if(event.getCharacters() != null && !event.getCharacters().contentEquals(EditableAccomodatingLatinIMETypeNullIssues.ONE_UNPROCESSED_CHARACTER)) {
-            if(keyCode == KeyEvent.KEYCODE_DEL){
+        String characters = event.getCharacters();
+        if (characters != null && !characters.contentEquals(EditableAccomodatingLatinIMETypeNullIssues.ONE_UNPROCESSED_CHARACTER)) {
+            if (keyCode == KeyEvent.KEYCODE_DEL) {
                 Windows98.windows98.onKeyPress("DEL");
-                invalidate();
-                return true;
+            } else if (!characters.isEmpty()) {
+                Windows98.windows98.onKeyPress(characters);   // 整串传递
             }
-            int c = event.getCharacters().codePointAt(0);
-            if(c == 0)
-                return true;
-            Windows98.windows98.onKeyPress(String.valueOf((char) c));
             invalidate();
             return true;
         }
-        else
-            return super.onKeyMultiple(keyCode, repeatCount, event);
+        return super.onKeyMultiple(keyCode, repeatCount, event);
     }
 
     // (с) https://stackoverflow.com/questions/18581636/android-cannot-capture-backspace-delete-press-in-soft-keyboard/19980975#19980975
@@ -572,6 +565,15 @@ public class WindowsView extends View {
                 return super.deleteSurroundingText(beforeLength, afterLength);
             }
         }
+		@Override
+        public boolean commitText(CharSequence text, int newCursorPosition) {
+            if (text.length() > 0) {
+                Windows98.windows98.onKeyPress(text.toString());
+                windowsView.invalidate();
+                return true;
+            }
+            return super.commitText(text, newCursorPosition);
+		}
     }
 
     private static class EditableAccomodatingLatinIMETypeNullIssues extends SpannableStringBuilder {
