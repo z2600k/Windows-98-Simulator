@@ -12,7 +12,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.AdaptiveIconDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.os.Build;
 
@@ -24,12 +23,11 @@ import simulate.z2600k.Windows98.System.AndroidIcon;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -76,7 +74,7 @@ public class AndroidApps extends Explorer {
     }
 
     public void deleteApp(Link link){
-        Uri packageURI = Uri.parse("package:" + linkAppInfo.get(link).packageName);
+        Uri packageURI = Uri.parse("package:" + Objects.requireNonNull(linkAppInfo.get(link)).packageName);
         Intent uninstallIntent = new Intent(Intent.ACTION_DELETE, packageURI);
         context.startActivity(uninstallIntent);
     }
@@ -113,14 +111,10 @@ public class AndroidApps extends Explorer {
                     Drawable drawable = resolveInfo.loadIcon(packageManager);
                     bitmap = createBitmap(32, 32, Bitmap.Config.ARGB_8888);
                     Canvas canvas = new Canvas(bitmap);
-                    if (Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.O && drawable instanceof AdaptiveIconDrawable && !packageName.equals("com.android.chrome")) {
+                    if (Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.O && drawable instanceof AdaptiveIconDrawable adaptive && !packageName.equals("com.android.chrome")) {
                         // у хрома пусть будет круглая иконка
-                        AdaptiveIconDrawable adaptive = (AdaptiveIconDrawable) drawable;
-                        Drawable background = adaptive.getBackground(), foreground = adaptive.getForeground();
-                        drawable = new LayerDrawable(new Drawable[]{background, foreground});
-                        final int margin = 10;
-                        drawable.setBounds(-margin, -margin, 32 + margin, 32 + margin);
-                        drawable.draw(canvas);
+                        adaptive.setBounds(0, 0, 32, 32);
+                        adaptive.draw(canvas);
                     } else {
                         drawable.setBounds(0, 0, 32, 32);
                         drawable.draw(canvas);
@@ -137,14 +131,12 @@ public class AndroidApps extends Explorer {
                 apps.add(new AppInfo(name, packageName, bitmap, launchIntent));
             }
 
-            Collections.sort(apps, new Comparator<AppInfo>() {
-                @Override
-                public int compare(AppInfo a, AppInfo b) {
-                    int result = a.name.compareTo(b.name);
-                    if (result != 0)
-                        return result;
-                    else
-                        return a.packageName.compareTo(b.packageName);
+            Collections.sort(apps, (a, b) -> {
+                int result = a.name.compareTo(b.name);
+                if (result != 0)
+                    return result;
+                else
+                    return a.packageName.compareTo(b.packageName);
                 }
             });
         }
@@ -153,29 +145,39 @@ public class AndroidApps extends Explorer {
     private void updateApps(){  // обновить ярлыки программ в данном окне
         Set<AppInfo> oldApps = new HashSet<>(linkAppInfo.values());
         synchronized (apps) {
-            if (apps.size() == oldApps.size() && oldApps.containsAll(apps))
-                return;
-            // удаляем приложения, которых больше нет
-            for (Iterator<Map.Entry<Link, AppInfo>> i = linkAppInfo.entrySet().iterator(); i.hasNext(); ) {
-                Map.Entry<Link, AppInfo> entry = i.next();
-                if (!apps.contains(entry.getValue())) {
-                    Link oldLink = entry.getKey();
-                    oldLink.parent = linkContainer;
-                    oldLink.removeFromParent();
-                    i.remove();
+            boolean needRebuild = false;
+            if (apps.size() != oldApps.size()) {
+                needRebuild = true;
+            } else {
+                for (AppInfo appInfo : apps) {
+                    AppInfo old = findOldAppInfo(oldApps, appInfo);
+                    if (old == null || !old.icon.sameAs(appInfo.icon)) {
+                        needRebuild = true;
+                        break;
+                    }
                 }
             }
-            // добавляем новые
+            if (!needRebuild) return;
+
+            // 完全重建链接
+            for (Map.Entry<Link, AppInfo> entry : new HashMap<>(linkAppInfo).entrySet()) {
+                entry.getKey().removeFromParent();
+            }
+            linkAppInfo.clear();
             for (AppInfo appInfo : apps) {
-                if (!oldApps.contains(appInfo)) {
-                    addLink(appInfo);
-                }
+                addLink(appInfo);
             }
         }
         linkContainer.updateLinkPositions();
         updateWindow();
     }
-
+    // 辅助方法
+    private AppInfo findOldAppInfo(Set<AppInfo> oldApps, AppInfo target) {
+        for (AppInfo old : oldApps) {
+            if (old.packageName.equals(target.packageName)) return old;
+        }
+        return null;
+    }
     private static class AppInfo {  // так как Link содержит ссылку на parent, и garbage collection не получится
         String name, packageName;
         Bitmap icon;
@@ -262,7 +264,19 @@ public class AndroidApps extends Explorer {
                 }
             };
             ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-            scheduler.scheduleAtFixedRate(checkInstalls, 5, 5, TimeUnit.SECONDS);
+            scheduler.scheduleWithFixedDelay(checkInstalls, 5, 5, TimeUnit.SECONDS);
+            BroadcastReceiver configChangeReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    if (Intent.ACTION_CONFIGURATION_CHANGED.equals(intent.getAction())) {
+                        updateAllAndroidApps();
+                    }
+                }
+            };
+            IntentFilter configFilter = new IntentFilter(Intent.ACTION_CONFIGURATION_CHANGED);
+            context.registerReceiver(configChangeReceiver, configFilter);
+            ScheduledExecutorService shapeChecker = Executors.newScheduledThreadPool(1);
+            shapeChecker.scheduleWithFixedDelay(AndroidApps::updateAllAndroidApps, 5, 5, TimeUnit.SECONDS);
         }
     }
 }
