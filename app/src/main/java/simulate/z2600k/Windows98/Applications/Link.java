@@ -151,7 +151,7 @@ public class Link extends ElementContainer implements DropdownList.Item {
         contextMenu = Link.getContextMenu(action, this, true);
         elements.add(contextMenu);
         // x, y = 16, 47; widthLimit = 69 (34 + 35)
-        renameTextBox = new TextBox(new Rect(16, 47, 16 + 69, Windows98.SCREEN_HEIGHT), 0, 0, p, new Rect(-1, -11, 0, 2));
+        renameTextBox = new TextBox(new Rect(16, 47, 16 + 69, Windows98.SCREEN_HEIGHT), 0, 0, p, new Rect(3, -11, 0, 2));
         renameTextBox.centerText = true;
         renameTextBox.maxTextLength = 127;
         renameTextBoxBounds = new Rect();
