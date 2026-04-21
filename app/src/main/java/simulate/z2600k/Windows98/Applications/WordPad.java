@@ -18,8 +18,8 @@ public class WordPad extends BaseNotepad {
     public WordPad(){
         super("文档 - 写字板",
                 R.drawable.write_wordpad_0,  R.drawable.wordpad1, Windows98.WIDESCREEN? R.drawable.wordpad2w : R.drawable.wordpad2);
-        initTextAndScrollBar(new RelativeBounds(6, 131, -22, -24), new RelativeBounds(-22, 131, -6, -24),
-                15, 15, p, new Rect(0, -12, 1, 3));
+        initTextAndScrollBar(new RelativeBounds(6, 131, -24, -25), new RelativeBounds(-24, 131, -6, -25),
+                15, 15, p, new Rect(0, -12, 2, 3));
         appTitle = "写字板";
         // top menu
         ButtonList file = new ButtonList();
