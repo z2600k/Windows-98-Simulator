@@ -20,7 +20,6 @@ import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.KeyEvent;
-import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
@@ -33,6 +32,7 @@ import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.activity.OnBackPressedCallback;
 
@@ -44,6 +44,7 @@ import simulate.z2600k.Windows98.Applications.MyDocuments;
 import simulate.z2600k.Windows98.Applications.WebViewContainer;
 import simulate.z2600k.Windows98.System.Element;
 import simulate.z2600k.Windows98.System.Taskbar;
+import simulate.z2600k.Windows98.System.ViewContainer;
 import simulate.z2600k.Windows98.System.Windows98;
 
 import java.lang.reflect.Method;
@@ -99,25 +100,27 @@ public class MainActivity extends AppCompatActivity {
         if(Windows98.windows98 != null && Windows98.state != Windows98.WAIT_FOR_STARTUP) {  // мы уже работаем
             if(recreatedViews) {
                 for (Element element : Windows98.windows98.elements) {
-                    if (element instanceof InternetExplorer) {  // InternetExplorer использует WebView... Так как при onCreate весь layout создаётся заново, надо туда обратно добавить все WebView
-                        InternetExplorer ie = (InternetExplorer) element;
+                    if (element instanceof InternetExplorer ie) {  // InternetExplorer использует WebView... Так как при onCreate весь layout создаётся заново, надо туда обратно добавить все WebView
                         WebView webView = ie.webViewContainer.webView;
                         ViewGroup.LayoutParams params = webView.getLayoutParams();
                         if(webView.getParent() != null)
                             ((ViewGroup) webView.getParent()).removeView(webView);
                         windowsViewGroup.addView(webView, params);
                     }
-                    else if(element instanceof MPlayer){
-                        TextureView textureView = ((MPlayer) element).textureView;
-                        if(textureView.getParent() != null)
-                            ((ViewGroup) textureView.getParent()).removeView(textureView);
-                        windowsViewGroup.addView(textureView, new RelativeLayout.LayoutParams(textureView.getWidth(), textureView.getHeight()));
+                    else if(element instanceof MPlayer mPlayer){
+                        ViewContainer viewContainer = mPlayer.surfaceViewContainer;
+                        View view = viewContainer.getView();
+                        ViewGroup.LayoutParams params = view.getLayoutParams();
+                        if(view.getParent() != null)
+                            ((ViewGroup) view.getParent()).removeView(view);
+                        windowsViewGroup.addView(view, params);
                     }
                     WindowsView.windowsView.bringToFront();
                 }
             }
             return;
         }
+        getOnBackPressedDispatcher().addCallback(this, callback);
         if(Windows98.windows98 == null)
             Windows98.windows98 = new Windows98();
         // туториал
@@ -141,7 +144,6 @@ public class MainActivity extends AppCompatActivity {
             hideTutorial();
             Windows98.windows98.startup();
         }
-        getOnBackPressedDispatcher().addCallback(this, callback);
     }
 
     @Override
@@ -150,38 +152,37 @@ public class MainActivity extends AppCompatActivity {
             return super.dispatchKeyEvent(event);
         int action = event.getAction();
         int keyCode = event.getKeyCode();
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_VOLUME_UP:   // 鼠标左键
-                if(action == KeyEvent.ACTION_DOWN) {
-                    if(leftKeyPressed)
-                        return true;
+        return switch (keyCode) {
+            case KeyEvent.KEYCODE_VOLUME_UP -> {
+                if (action == KeyEvent.ACTION_DOWN) {
+                    if (leftKeyPressed)
+                        yield true;
                     leftKeyPressed = true;
                     WindowsView.windowsView.onCursorDown();
-                }
-                else if(action == KeyEvent.ACTION_UP){
-                    if(!leftKeyPressed)
-                        return true;
+                } else if (action == KeyEvent.ACTION_UP) {
+                    if (!leftKeyPressed)
+                        yield true;
                     leftKeyPressed = false;
                     WindowsView.windowsView.onCursorUp();
                 }
-                return true;
-            case KeyEvent.KEYCODE_VOLUME_DOWN:   // 鼠标右键
+                yield true;
+            }
+            case KeyEvent.KEYCODE_VOLUME_DOWN -> {
                 if (action == KeyEvent.ACTION_DOWN) {
-                    if(rightKeyPressed)
-                        return true;
+                    if (rightKeyPressed)
+                        yield true;
                     rightKeyPressed = true;
                     WindowsView.windowsView.onRightDown();
-                }
-                else if(action == KeyEvent.ACTION_UP){
-                    if(!rightKeyPressed)
-                        return true;
+                } else if (action == KeyEvent.ACTION_UP) {
+                    if (!rightKeyPressed)
+                        yield true;
                     rightKeyPressed = false;
                     WindowsView.windowsView.onRightUp();
                 }
-                return true;
-            default:
-                return super.dispatchKeyEvent(event);
-        }
+                yield true;
+            }
+            default -> super.dispatchKeyEvent(event);
+        };
     }
 
     public void onTutorialEndClick(View view){
@@ -237,7 +238,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if(requestCode != 1)
             return;
