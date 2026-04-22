@@ -41,10 +41,10 @@ public abstract class BaseSolitaire extends Window {
             el.onDraw(canvas, x + el.x, y + el.y);
         }
         if(drawMovingCards)
-            drawMovingCards(canvas, x, y);
+            drawMovingCards(canvas);
     }
 
-    void drawMovingCards(Canvas canvas, int x, int y){
+    void drawMovingCards(Canvas canvas){
         if(!movingCards.isEmpty()){  // если двигаем карту
             int cur_x = getCursorX() + cardShiftX;
             int cur_y = getCursorY() + cardShiftY;
@@ -62,9 +62,8 @@ public abstract class BaseSolitaire extends Window {
             int min_dist = (int) 1e9;
             CardStack bestCardStack = null;
             for(int i = 0; i < elements.size(); i++){
-                if(!(elements.get(i) instanceof CardStack))
+                if(!(elements.get(i) instanceof CardStack cardStack))
                     continue;
-                CardStack cardStack = (CardStack) elements.get(i);
                 if(cardStack.acceptCards(movingCards)){
                     if(!cardStack.intersectsWithCard(card_x - cardStack.x, card_y - cardStack.y))
                         continue;
@@ -85,9 +84,9 @@ public abstract class BaseSolitaire extends Window {
             movingCards.clear();
 
             if(bestCardStack != null){
-                CardStack from = returnCardsTo, to = bestCardStack;
-                if(from != to)
-                    onCardMoved(from, to);
+                CardStack from = returnCardsTo;
+                if(from != bestCardStack)
+                    onCardMoved(from, bestCardStack);
             }
             playCardReleasedSound();
         }

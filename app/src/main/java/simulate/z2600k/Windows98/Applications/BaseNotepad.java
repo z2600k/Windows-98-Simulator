@@ -130,13 +130,8 @@ public class BaseNotepad extends DummyWindow implements FileDialog.ActionOnSave 
 
     void open(){
         performActionWithSaveCheck(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        new FileDialog(true, "txt", "文本文档",
-                                BaseNotepad.this, getTxtWriter(), FileDialog.getDir(openedFile));
-                    }
-                }
+                () -> new FileDialog(true, "txt", "文本文档",
+                        BaseNotepad.this, getTxtWriter(), FileDialog.getDir(openedFile))
         );
     }
 
@@ -155,12 +150,7 @@ public class BaseNotepad extends DummyWindow implements FileDialog.ActionOnSave 
     @Override
     public void close(final boolean activateNextWindow) {
         performActionWithSaveCheck(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        BaseNotepad.super.close(activateNextWindow);
-                    }
-                }
+                () -> BaseNotepad.super.close(activateNextWindow)
         );
     }
 
@@ -168,18 +158,15 @@ public class BaseNotepad extends DummyWindow implements FileDialog.ActionOnSave 
         if(textChanged && appTitle != null) {  // appTitle = "Notepad" или "WordPad"
             // спрашиваем пользователя, хочет ли он сохранить файл
             new MessageBox(appTitle, "文件 " + (openedFile == null ? "无标题" : MyDocuments.getFullPath(openedFile)) + " 的正文已更改。\n\n是否保存更改?",
-                    MessageBox.YESNOCANCEL, MessageBox.WARNING, new MessageBox.MsgResultListener() {
-                @Override
-                public void onMsgResult(int buttonNumber) {
-                    if(buttonNumber == YES){  // YES
-                        setActionOnSave(action);
-                        save();
-                    }
-                    else if(buttonNumber == NO){  // NO
-                        action.run();
-                    }
-                }
-            }, this);
+                    MessageBox.YESNOCANCEL, MessageBox.WARNING, buttonNumber -> {
+                        if(buttonNumber == MessageBox.MsgResultListener.YES){  // YES
+                            setActionOnSave(action);
+                            save();
+                        }
+                        else if(buttonNumber == MessageBox.MsgResultListener.NO){  // NO
+                            action.run();
+                        }
+                    }, this);
         }
         else
             action.run();
