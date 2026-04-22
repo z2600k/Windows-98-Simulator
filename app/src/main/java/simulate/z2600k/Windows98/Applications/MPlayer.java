@@ -2,12 +2,14 @@ package simulate.z2600k.Windows98.Applications;
 
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.media.MediaFormat;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
 import android.view.Display;
@@ -65,6 +67,7 @@ public class MPlayer extends Window {
     private ExoPlayer player;
     private SurfaceView surfaceView;
     public ViewContainer surfaceViewContainer;
+    private Paint coverPaint;
 
     private boolean hasContent = false;
     private boolean isVideo = false;
@@ -72,12 +75,14 @@ public class MPlayer extends Window {
     private static final int PLAYING = 0, PAUSED = 1, STOPPED = 2;
     private int state;
     private int contentWidth = 284, contentHeight = 185;
+    private Bitmap coverBitmap;          // 音频封面
+    private boolean hasCover = false;    // 是否有封面可显示
 
     private WakeLock wakeLock = new WakeLock();
     private boolean ignoreRepositionElements = false, ignoreUpdateContentSize = false;
     private Bitmap inactiveButtonsBmp = getBmp(R.drawable.mplayer_buttons),
             winBmp = getBmp(R.drawable.mplayer_win), stereo = getBmp(R.drawable.mplayer_stereo);
-    private static List<String> audioFormats = Arrays.asList("mp3", "aac", "flac", "ogg", "wav", "wma", "mid");
+    private static List<String> audioFormats = Arrays.asList("mp3", "aac", "flac", "ogg", "wav", "wma", "mid", "m4a");
     private static List<String> videoFormats = Arrays.asList("mp4", "3gp", "wmv", "webm", "avi", "mkv", "flv", "mov");
     static String[] supportedFormats;
 
@@ -87,6 +92,12 @@ public class MPlayer extends Window {
             supportedFormats[i] = audioFormats.get(i);
         for (int i = 0; i < videoFormats.size(); i++)
             supportedFormats[i + audioFormats.size()] = videoFormats.get(i);
+    }
+
+    {
+        coverPaint = new Paint();
+        coverPaint.setFilterBitmap(true);  // 开启双线性滤波，实现抗锯齿
+        coverPaint.setDither(true);        // 可选，改善颜色过渡
     }
 
     @OptIn(markerClass = UnstableApi.class) private boolean isHdrFormat(Format format) {
@@ -227,7 +238,7 @@ public class MPlayer extends Window {
             final String key = "mpcTutorialShowedTimes";
             int showedTimes = sharedPreferences.getInt(key, 0);
             if (showedTimes < 6) {
-                makeSnackbar(R.string.mpc_tutorial, Snackbar.LENGTH_SHORT);
+                makeSnackbar(R.string.mpc_tutorial, Snackbar.LENGTH_LONG);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
                 editor.putInt(key, showedTimes + 1);
                 editor.apply();
@@ -370,6 +381,16 @@ public class MPlayer extends Window {
             int videoX = (left + right) / 2 - contentWidth / 2;
             int videoY = (top + bottom) / 2 - contentHeight / 2;
             drawHole(canvas, videoX, videoY, videoX + contentWidth, videoY + contentHeight);
+        } else if (hasCover && coverBitmap != null && !coverBitmap.isRecycled()) {
+            // 绘制音频封面，居中并按比例缩放
+            int coverDrawWidth = contentWidth;
+            int coverDrawHeight = contentHeight;
+            int drawX = (left + right) / 2 - coverDrawWidth / 2;
+            int drawY = (top + bottom) / 2 - coverDrawHeight / 2;
+            // 使用带抗锯齿的 Paint 绘制
+            canvas.drawBitmap(coverBitmap, null,
+                    new Rect(drawX, drawY, drawX + coverDrawWidth, drawY + coverDrawHeight),
+                    coverPaint);
         } else if (contentArea.width >= winBmp.getWidth() && contentArea.height >= winBmp.getHeight()) {
             int drawX = (left + right) / 2 - winBmp.getWidth() / 2;
             int drawY = (top + bottom) / 2 - winBmp.getHeight() / 2;
@@ -392,6 +413,10 @@ public class MPlayer extends Window {
         if (player != null) {
             player.release();
             player = null;
+        }
+        if (coverBitmap != null && !coverBitmap.isRecycled()) {
+            coverBitmap.recycle();
+            coverBitmap = null;
         }
         wakeLock.setScreenOn(false);
     }
@@ -746,18 +771,73 @@ public class MPlayer extends Window {
         );
     }
 
+    /**
+     * 尝试从音频文件中提取内嵌封面
+     */
+    private Bitmap extractCoverFromAudio(String filePath) {
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        try {
+            retriever.setDataSource(filePath);
+            byte[] picture = retriever.getEmbeddedPicture();
+            if (picture != null) {
+                return BitmapFactory.decodeByteArray(picture, 0, picture.length);
+            }
+        } catch (Exception e) {
+            // 忽略提取失败，返回 null
+        } finally {
+            try {
+                retriever.release();
+            } catch (Exception ignored) {}
+        }
+        return null;
+    }
+
     private void startPlayback(File file) {
         setHasContent(false);
         player.stop();
         player.clearMediaItems();
-
+        // 释放旧封面
+        if (coverBitmap != null && !coverBitmap.isRecycled()) {
+            coverBitmap.recycle();
+            coverBitmap = null;
+        }
+        hasCover = false;
         Uri uri = Uri.fromFile(file);
         MediaItem mediaItem = MediaItem.fromUri(uri);
         player.setMediaItem(mediaItem);
 
         setTitle(Link.getSimpleFilename(file.getName()) + " - Windows Media Player");
+        // 如果是音频文件，预先尝试提取封面
+        String fileName = file.getName().toLowerCase();
+        boolean isAudioFile = false;
+        for (String ext : audioFormats) {
+            if (fileName.endsWith("." + ext)) {
+                isAudioFile = true;
+                break;
+            }
+        }
 
-        player.prepare();
+        if (isAudioFile) {
+            // 异步提取封面，避免阻塞 UI
+            new Thread(() -> {
+                Bitmap extracted = extractCoverFromAudio(file.getAbsolutePath());
+                WindowsView.handler.post(() -> {
+                    if (extracted != null) {
+                        coverBitmap = extracted;
+                        hasCover = true;
+                        // 更新内容尺寸为封面原始尺寸
+                        contentWidth = coverBitmap.getWidth();
+                        contentHeight = coverBitmap.getHeight();
+                    }
+                    // 继续准备播放
+                    player.prepare();
+                });
+            }).start();
+        } else {
+            // 视频文件直接准备
+            player.prepare();
+        }
+
         player.addListener(new Player.Listener() {
             @Override
             public void onPlaybackStateChanged(int playbackState) {
@@ -845,12 +925,12 @@ public class MPlayer extends Window {
     }
 
     private void updateContentSize() {
-        if (playingVideo()) {
+        if (playingVideo() || (hasCover && coverBitmap != null)) {
             if (player.getVideoSize().width > 0) {
                 contentWidth = player.getVideoSize().width;
                 contentHeight = player.getVideoSize().height;
             }   // 获取视频宽高
-        } else if (!isVideo) {
+        }else {
             contentWidth = contentHeight = 0;
             ViewContainer.setSize(surfaceView, 1, 1);
         }
