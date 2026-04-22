@@ -13,7 +13,7 @@
         android:id="@+id/windowsViewGroup"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        
+
         <simulate.z2600k.Windows98.WindowsView
             android:id="@+id/windowsView"
             android:layout_width="match_parent"
