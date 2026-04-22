@@ -15,6 +15,13 @@
     <uses-permission-sdk-23 android:name="android.permission.QUERY_ALL_PACKAGES" />
     <uses-permission-sdk-23 android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
     <application
         android:name="androidx.multidex.MultiDexApplication"
         android:allowBackup="true"
@@ -31,6 +38,7 @@
         android:hardwareAccelerated="true"
         tools:targetApi="37">
         <!-- android:screenOrientation="landscape" -->
+
         <activity
             android:name=".MainActivity"
             android:screenOrientation="sensorLandscape"
