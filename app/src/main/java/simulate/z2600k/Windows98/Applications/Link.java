@@ -5,11 +5,11 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
-import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
 
@@ -68,7 +68,7 @@ public class Link extends ElementContainer implements DropdownList.Item {
     };
     private boolean renameRunnableRunning = false;
     private static final List<String> knownTypes = Arrays.asList("bat", "icon", "ico", "gif", "bmp", "png", "jpg", "jpeg", "exe", "com", "ttf", "dll", "fon", "inf", "txt", "url", "ani",
-            "aac", "flac", "mp3", "ogg", "wav", "wma", "mp4", "3gp", "wmv", "webm", "avi", "mkv", "flv", "mov", "apk", "mid");
+            "aac", "flac", "mp3", "ogg", "wav", "wma", "mp4", "3gp", "wmv", "webm", "avi", "mkv", "flv", "mov", "apk", "mid", "m4a");
     // При ошибке переименования создаётся MessageBox, у него в super конструторе вызывается makeActive(),
     // который вызывает onOtherTouch на Explorer, а значит и на Link, Link вызывает applyRename, и возвращаемся к началу...
     private boolean isMessageBoxPresent = false;
@@ -76,7 +76,10 @@ public class Link extends ElementContainer implements DropdownList.Item {
     private Bitmap movingIcon; // иконка для перемещения link
     private boolean isMoving = false;
     private int lastTouchX, lastTouchY;  // для перемещения Link (оно начинается после смещения курсора на 4 пикселя)
-
+    private static final Paint hiddenPaint = new Paint();
+    static {
+        hiddenPaint.setAlpha(191);
+    }
 
     public Link(String text, String helpText, Bitmap icon, OnClickRunnable action){
         this.text = text;
@@ -111,8 +114,7 @@ public class Link extends ElementContainer implements DropdownList.Item {
         if(path.isDirectory()){
             action = p -> ((Explorer.LinkContainer) parent).changeDirectory(path);
         }
-        else if(parentWindow instanceof FileDialog) {
-            final FileDialog fileDialog = (FileDialog) parentWindow;
+        else if(parentWindow instanceof FileDialog fileDialog) {
             action = p -> {
                 if (fileDialog.open)
                     fileDialog.onOpenPress();
@@ -267,29 +269,23 @@ public class Link extends ElementContainer implements DropdownList.Item {
                 case "exe": case "com":
                     setIcon(R.drawable.com_exe);
                     helpText = extension.equals("exe") ? "应用程序" : "MS-DOS 应用程序";
-                    if (text.equals("Mspaint"))
-                        setIcon(R.drawable.paint_2);
-                    else if (text.equals("Wordpad"))
-                        setIcon(R.drawable.write_wordpad_1);
-                    else if (text.equals("Iexplore"))
-                        setIcon(R.drawable.iexplore_32528_0);
-                    else if (text.equals("Mplayer2"))
-                        setIcon(R.drawable.mplayer2_110_0);
-                    else if (text.equals("Msimn"))
-                        setIcon(R.drawable.outlook_express_0);
+                    switch (text) {
+                        case "Mspaint" -> setIcon(R.drawable.paint_2);
+                        case "Wordpad" -> setIcon(R.drawable.write_wordpad_1);
+                        case "Iexplore" -> setIcon(R.drawable.iexplore_32528_0);
+                        case "Mplayer2" -> setIcon(R.drawable.mplayer2_110_0);
+                        case "Msimn" -> setIcon(R.drawable.outlook_express_0);
+                    }
 
                     if (extension.equals("exe")) {
                         action = parent -> {
-                            if (text.equals("Mspaint"))
-                                new PaintBrush();
-                            else if (text.equals("Wordpad"))
-                                new WordPad();
-                            else if (text.equals("Iexplore"))
-                                new InternetExplorer();
-                            else if (text.equals("Mplayer2"))
-                                new MPlayer();
-                            else if (text.equals("Msimn"))
-                                StartMenu.createOutlookExpress();
+                            switch (text) {
+                                case "Mspaint" -> new PaintBrush();
+                                case "Wordpad" -> new WordPad();
+                                case "Iexplore" -> new InternetExplorer();
+                                case "Mplayer2" -> new MPlayer();
+                                case "Msimn" -> StartMenu.createOutlookExpress();
+                            }
                         };
                     } else {// if (ext.equals("com")) {
                         action = parent -> new MsDos();
@@ -340,12 +336,12 @@ public class Link extends ElementContainer implements DropdownList.Item {
                     helpText = "MIDI 序列";
                     action = parent -> new MPlayer();
                     break;
-                case "aac": case "flac": case "mp3": case "ogg": case "wma":
+                case "aac","flac","mp3","ogg","wma","m4a":
                     setIcon(R.drawable.video_tl_1);
                     helpText = extension.toUpperCase() + " 文件";
                     action = parent -> new MPlayer();
                     break;
-                case "mp4": case "3gp": case "wmv": case "webm": case "avi": case "mkv": case "flv": case "mov":
+                case "mp4","3gp","wmv","webm","avi","mkv","flv","mov":
                     setIcon(R.drawable.video_1);
                     helpText = "视频文件";
                     action = parent -> new MPlayer();
@@ -406,7 +402,12 @@ public class Link extends ElementContainer implements DropdownList.Item {
     public void onDraw(Canvas canvas, int x, int y) {
         if(active && activeIcon == null)  // ленивая инициализация
             createActiveIcon();
-        canvas.drawBitmap(active? activeIcon : icon, x, y, null);
+        boolean isHidden = false;
+        if (path != null) {
+            isHidden = path.isHidden() || fullFilename.startsWith(".");
+        }
+        Paint paint = isHidden ? hiddenPaint : null;
+        canvas.drawBitmap(active ? activeIcon : icon, x, y, paint);
         if(!isRenaming()) {  // если не переименовываем - рисуем текст
             drawText(active ? this.lines_full : this.lines, canvas,
                     x + textDrawX, y + textDrawY);
@@ -427,8 +428,8 @@ public class Link extends ElementContainer implements DropdownList.Item {
             renameTextBox.onDraw(canvas, x + renameTextBox.x, y + renameTextBox.y);
         }
         if(isMoving){
-            x += WindowsView.cursor_x - (lastTouchX + getAbsoluteX());
-            y += WindowsView.cursor_y - (lastTouchY + getAbsoluteY());
+            x += (int) (WindowsView.cursor_x - (lastTouchX + getAbsoluteX()));
+            y += (int) (WindowsView.cursor_y - (lastTouchY + getAbsoluteY()));
             canvas.drawBitmap(movingIcon, x, y, null);
             p.setColor(Color.BLACK);
             drawMultilineText(canvas, lines_full, x + 16, y + 47, 13, p, true);
@@ -690,24 +691,21 @@ public class Link extends ElementContainer implements DropdownList.Item {
         if(parent != null)
             parent.inputFocus = this;
         scrollToSelf();
-        if(parent.parent instanceof Explorer){
-            Explorer explorer = (Explorer) parent.parent;
+        if(parent.parent instanceof Explorer explorer){
             explorer.curFilename = fullFilename;
             explorer.curFilenameLines = null;
             explorer.helpText = helpText;
             explorer.helpTextLines = null;
         }
-        else if(parentWindow != null && parentWindow instanceof FileDialog){
-            FileDialog fileDialog = (FileDialog) parentWindow;
+        else if(parentWindow != null && parentWindow instanceof FileDialog fileDialog){
             fileDialog.textBox.setText(fullFilename);
             fileDialog.textBox.moveCursorToEnd();
         }
     }
 
     private void scrollToSelf(){
-        if(parent instanceof ScrollElementContainer && !(parent instanceof Windows98.DesktopLinks)){  // скроллим его так, чтобы нас было видно
+        if(parent instanceof ScrollElementContainer scrollArea && !(parent instanceof Windows98.DesktopLinks)){  // скроллим его так, чтобы нас было видно
             Rect bounds = active? fullBounds : smallBounds;
-            ScrollElementContainer scrollArea = (ScrollElementContainer) parent;
             offsetRect.set(bounds);
             offsetRect.offset(this.x, this.y - scrollArea.scrollY);
             if(offsetRect.bottom > scrollArea.height){  // в первую очередь - нижняя граница, т. к. набор текста
@@ -758,29 +756,26 @@ public class Link extends ElementContainer implements DropdownList.Item {
         scrollToSelf();
     }
 
-    private boolean applyRename(){  // возвращает создался ли новый ярлык (было ли переименование успешным)
+    private void applyRename(){  // возвращает создался ли новый ярлык (было ли переименование успешным)
         //if(parentWindow.childMessagebox != null)
         //    return;
         if(isMessageBoxPresent)
-            return false;
+            return;
         String newFilename = renameTextBox.text.trim();
         if(isKnownFileType())
             newFilename += "." + extension;
         if(newFilename.equals(fullFilename)) {
             stopRenaming();
-            return false;
+            return;
         }
-        MessageBox.MsgResultListener msgListener = new MessageBox.MsgResultListener() {
-            @Override
-            public void onMsgResult(int buttonNumber) {
-                stopRenaming();
-                isMessageBoxPresent = false;
-            }
+        MessageBox.MsgResultListener msgListener = buttonNumber -> {
+            stopRenaming();
+            isMessageBoxPresent = false;
         };
         if(newFilename.isEmpty() || newFilename.startsWith(".")){
             isMessageBoxPresent = true;
             new MessageBox("重命名", "必须键入文件名", MessageBox.OK, MessageBox.ERROR, msgListener, parentWindow);
-            return false;
+            return;
         }
         else if(!FileDialog.checkFilename(newFilename)){
             // Здесь MessageBox отображает "центрованный текст"
@@ -788,7 +783,7 @@ public class Link extends ElementContainer implements DropdownList.Item {
             isMessageBoxPresent = true;
             new MessageBox("重命名", "文件名不能包括以下字符：\n              \\ / :  * ? \" < > |",
                     MessageBox.OK, MessageBox.ERROR, msgListener, parentWindow);
-            return false;
+            return;
         }
         File newPath = new File(path.getParent() + File.separator + newFilename);
         if(newPath.exists() && !(newFilename.equalsIgnoreCase(fullFilename))){
@@ -796,7 +791,7 @@ public class Link extends ElementContainer implements DropdownList.Item {
             new MessageBox("重命名文件出错",
                     "无法重命名 " + getSimpleFilename() + "：指定的文件与现有文件重名。请指定另一文件名。",
                     MessageBox.OK, MessageBox.ERROR, msgListener, parentWindow);
-            return false;
+            return;
         }
         stopRenaming();
         int index = parent.elements.indexOf(this);  // чтобы новый ярлык был в том же месте
@@ -812,7 +807,6 @@ public class Link extends ElementContainer implements DropdownList.Item {
             newLink.convertToDesktopLink(false);
             newLink.saveDesktopPosition();
         }
-        return true;
     }
 
     private void startRenameRunnable(){
@@ -899,16 +893,13 @@ public class Link extends ElementContainer implements DropdownList.Item {
             return;
         }
         new MessageBox("确认文件夹删除", "确实要删除文件夹“" + getSimpleFilename() + "”以及全部内容吗?",
-                MessageBox.YESNO, getBmp(R.drawable.delete_file), new MessageBox.MsgResultListener() {
-            @Override
-            public void onMsgResult(int buttonNumber) {
-                if(buttonNumber == YES) {
-                    deleteFile(path);
-                    removeFromParent();
-                    ((Explorer.LinkContainer) parent).updateLinkPositions();
-                }
-            }
-        }, parentWindow);
+                MessageBox.YESNO, getBmp(R.drawable.delete_file), buttonNumber -> {
+                    if(buttonNumber == MessageBox.MsgResultListener.YES) {
+                        deleteFile(path);
+                        removeFromParent();
+                        ((Explorer.LinkContainer) parent).updateLinkPositions();
+                    }
+                }, parentWindow);
     }
 
     private static void deleteFile(File file){
