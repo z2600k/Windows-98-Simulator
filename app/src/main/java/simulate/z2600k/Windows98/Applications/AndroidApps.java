@@ -137,7 +137,6 @@ public class AndroidApps extends Explorer {
                     return result;
                 else
                     return a.packageName.compareTo(b.packageName);
-                }
             });
         }
     }
@@ -171,6 +170,7 @@ public class AndroidApps extends Explorer {
         linkContainer.updateLinkPositions();
         updateWindow();
     }
+
     // 辅助方法
     private AppInfo findOldAppInfo(Set<AppInfo> oldApps, AppInfo target) {
         for (AppInfo old : oldApps) {
@@ -178,6 +178,7 @@ public class AndroidApps extends Explorer {
         }
         return null;
     }
+
     private static class AppInfo {  // так как Link содержит ссылку на parent, и garbage collection не получится
         String name, packageName;
         Bitmap icon;
@@ -252,19 +253,21 @@ public class AndroidApps extends Explorer {
             context.registerReceiver(installReceiver, intentFilter);
         }
         else{
+            // Android 8.0+ 使用 ChangedPackages 监控安装/卸载
             Runnable checkInstalls = () -> {
-                if(context == null)
-                    return;
+                if (context == null) return;
                 PackageManager pm = context.getPackageManager();
                 ChangedPackages changedPackages = pm.getChangedPackages(sequenceNumber);
-                if(changedPackages != null) {
+                if (changedPackages != null) {
                     sequenceNumber = changedPackages.getSequenceNumber();
-                    if(!changedPackages.getPackageNames().isEmpty())
+                    if (!changedPackages.getPackageNames().isEmpty())
                         updateAllAndroidApps();
                 }
             };
             ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
             scheduler.scheduleWithFixedDelay(checkInstalls, 5, 5, TimeUnit.SECONDS);
+
+            // 添加配置变更监听（用于捕获图标形状变化）
             BroadcastReceiver configChangeReceiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
@@ -276,6 +279,7 @@ public class AndroidApps extends Explorer {
             IntentFilter configFilter = new IntentFilter(Intent.ACTION_CONFIGURATION_CHANGED);
             context.registerReceiver(configChangeReceiver, configFilter);
             ScheduledExecutorService shapeChecker = Executors.newScheduledThreadPool(1);
+            // 5 秒后备检查：强制刷新（如果图标实际无变化，updateAllAndroidApps 内部会快速返回）
             shapeChecker.scheduleWithFixedDelay(AndroidApps::updateAllAndroidApps, 5, 5, TimeUnit.SECONDS);
         }
     }
