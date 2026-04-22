@@ -7,8 +7,8 @@ android {
         applicationId "simulate.z2600k.Windows98"
         minSdkVersion 16
         targetSdkVersion 37
-        versionCode 43
-        versionName '2.0.0'
+        versionCode 44
+        versionName '2.1.0'
         // resourceConfigurations += ["en-rUS", "de-rDE", "es-rES", "fr-rFR", "pl-rPL", "pt-rPT", "ru", "tr-rTR", "zh-rCN", "zh-rHK"]
         multiDexEnabled = true
     }
@@ -17,7 +17,7 @@ android {
         release {
             keyAlias 'key0' // your key ailas name
             keyPassword '******' // your password
-            storeFile file('***.jks') // your .jks file path 
+            storeFile file('***.jks') // your .jks file path
             storePassword '******' // your password
         }
     }
