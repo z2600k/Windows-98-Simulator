@@ -18,7 +18,6 @@ import simulate.z2600k.Windows98.System.DialogWindow;
 import simulate.z2600k.Windows98.System.Element;
 import simulate.z2600k.Windows98.System.HelpTopics;
 import simulate.z2600k.Windows98.System.MessageBox;
-import simulate.z2600k.Windows98.System.OnClickRunnable;
 import simulate.z2600k.Windows98.System.RadioButton;
 import simulate.z2600k.Windows98.System.Separator;
 import simulate.z2600k.Windows98.System.TopMenuButton;
@@ -55,18 +54,15 @@ public class Spider extends BaseSolitaire {
             // просим переключиться в широкоэкранный режим
             forceClose();
             new MessageBox("蜘蛛", "该游戏需要以宽屏幕模式进行游玩。想现在就重新启动吗?\n您可以稍后在“控制面板”中调节分辨率。",
-                    MessageBox.YESNO, MessageBox.WARNING, new MessageBox.MsgResultListener() {
-                @Override
-                public void onMsgResult(int buttonNumber) {
-                    if(buttonNumber == YES){
-                        SharedPreferences sharedPreferences = getSharedPreferences();
-                        SharedPreferences.Editor editor = sharedPreferences.edit();
-                        editor.putBoolean("widescreen", true);
-                        editor.apply();
-                        Windows98.windows98.restart();
-                    }
-                }
-            }, null);
+                    MessageBox.YESNO, MessageBox.WARNING, buttonNumber -> {
+                        if(buttonNumber == MessageBox.MsgResultListener.YES){
+                            SharedPreferences sharedPreferences = getSharedPreferences();
+                            SharedPreferences.Editor editor = sharedPreferences.edit();
+                            editor.putBoolean("widescreen", true);
+                            editor.apply();
+                            Windows98.windows98.restart();
+                        }
+                    }, null);
             return;
         }
 
@@ -93,32 +89,16 @@ public class Spider extends BaseSolitaire {
 
         // top menu
         ButtonList game = new ButtonList();
-        game.elements.add(new ButtonInList("新游戏", "F2", new OnClickRunnable() {
-            @Override
-            public void run(Element parent) {
-                new MessageBox("蜘蛛", "是否开启新游戏?",
-                        MessageBox.YESNO, MessageBox.QUESTION, new MessageBox.MsgResultListener() {
-                    @Override
-                    public void onMsgResult(int buttonNumber) {
-                        if(buttonNumber == YES)
-                            newGame();
-                    }
-                }, Spider.this);
-            }
-        }));
-        game.elements.add(new ButtonInList("重新开始本次游戏", new OnClickRunnable() {
-            @Override
-            public void run(Element parent) {
-                new MessageBox("蜘蛛", "是否从头开始这次游戏?",
-                        MessageBox.YESNO, MessageBox.QUESTION, new MessageBox.MsgResultListener() {
-                    @Override
-                    public void onMsgResult(int buttonNumber) {
-                        if(buttonNumber == YES)
-                            newGame(currentSeed);
-                    }
-                }, Spider.this);
-            }
-        }));
+        game.elements.add(new ButtonInList("新游戏", "F2", parent -> new MessageBox("蜘蛛", "是否开启新游戏?",
+                MessageBox.YESNO, MessageBox.QUESTION, buttonNumber -> {
+                    if(buttonNumber == MessageBox.MsgResultListener.YES)
+                        newGame();
+                }, Spider.this)));
+        game.elements.add(new ButtonInList("重新开始本次游戏", parent -> new MessageBox("蜘蛛", "是否从头开始这次游戏?",
+                MessageBox.YESNO, MessageBox.QUESTION, buttonNumber -> {
+                    if(buttonNumber == MessageBox.MsgResultListener.YES)
+                        newGame(currentSeed);
+                }, Spider.this)));
         game.elements.add(new Separator());
         ButtonInList undo = new ButtonInList("撤销", "Ctrl+Z");
         undo.disabled = true;
@@ -132,19 +112,11 @@ public class Spider extends BaseSolitaire {
         game.elements.add(new ButtonInList("选项...", "F5"));
         game.elements.add(new Separator());
         game.elements.add(new ButtonInList("保存本次游戏", "Ctrl+S", parent -> saveGameWithCheck()));
-        openLastSavedGame = new ButtonInList("打开上次保存的游戏", "Ctrl+O", new OnClickRunnable() {
-            @Override
-            public void run(Element parent) {
-                new MessageBox("蜘蛛", "是否放弃当前正在玩的游戏，加载上次保存的游戏?",
-                        MessageBox.YESNO, MessageBox.QUESTION, new MessageBox.MsgResultListener() {
-                    @Override
-                    public void onMsgResult(int buttonNumber) {
-                        if(buttonNumber == YES)
-                            loadGame();
-                    }
-                }, Spider.this);
-            }
-        });
+        openLastSavedGame = new ButtonInList("打开上次保存的游戏", "Ctrl+O", parent -> new MessageBox("蜘蛛", "是否放弃当前正在玩的游戏，加载上次保存的游戏?",
+                MessageBox.YESNO, MessageBox.QUESTION, buttonNumber -> {
+                    if(buttonNumber == MessageBox.MsgResultListener.YES)
+                        loadGame();
+                }, Spider.this));
         openLastSavedGame.disabled = !getSharedPreferences().contains(saveKey);
         game.elements.add(openLastSavedGame);
         game.elements.add(new Separator());
@@ -184,13 +156,14 @@ public class Spider extends BaseSolitaire {
         p.setColor(Color.rgb(0, 127, 0));
         canvas.drawRect(scoreWindow.left + 1, scoreWindow.top + 1,
                 scoreWindow.right - 1, scoreWindow.bottom - 1, p);
-        p_system.setColor(Color.rgb(255,255,255));
+        p_system.setColor(Color.WHITE);
+        p_game.setColor(Color.WHITE);
         canvas.drawText("分数:", scoreWindow.left + 64, scoreWindow.top + 43, p_game);
         canvas.drawText(String.valueOf(score), scoreWindow.left + 111, scoreWindow.top + 43, p_system);
         canvas.drawText("操作:", scoreWindow.left + 64, scoreWindow.top + 63, p_game);
         canvas.drawText(String.valueOf(moves), scoreWindow.left + 111, scoreWindow.top + 63, p_system);
 
-        drawMovingCards(canvas, x, y);
+        drawMovingCards(canvas);
         if(win){  // рисуем надпись "You Won!"
             int drawX = limitsRect.centerX() - winBmp.getWidth() / 2;
             int drawY = limitsRect.centerY() - winBmp.getHeight() / 2;
@@ -455,15 +428,12 @@ public class Spider extends BaseSolitaire {
             return;
         }
         new MessageBox("蜘蛛", "保存的游戏已存在。是否用当前的游戏替换上次保存的游戏?",
-                MessageBox.YESNO, MessageBox.QUESTION, new MessageBox.MsgResultListener() {
-            @Override
-            public void onMsgResult(int buttonNumber) {
-                if(buttonNumber == YES)
-                    saveGame();
-                else
-                    closeOnSave = false;
-            }
-        }, Spider.this);
+                MessageBox.YESNO, MessageBox.QUESTION, buttonNumber -> {
+                    if(buttonNumber == MessageBox.MsgResultListener.YES)
+                        saveGame();
+                    else
+                        closeOnSave = false;
+                }, Spider.this);
     }
 
     private void loadGame(){
@@ -493,17 +463,14 @@ public class Spider extends BaseSolitaire {
             return;
         }
         new MessageBox("蜘蛛", "关闭该游戏之前是否要保存?",
-                MessageBox.YESNOCANCEL, MessageBox.QUESTION, new MessageBox.MsgResultListener() {
-            @Override
-            public void onMsgResult(int buttonNumber) {
-                if(buttonNumber == YES) {
-                    closeOnSave = true;
-                    saveGameWithCheck();
-                }
-                else if(buttonNumber == NO)
-                    Spider.super.close(activateNextWindow);
-            }
-        }, this);
+                MessageBox.YESNOCANCEL, MessageBox.QUESTION, buttonNumber -> {
+                    if(buttonNumber == MessageBox.MsgResultListener.YES) {
+                        closeOnSave = true;
+                        saveGameWithCheck();
+                    }
+                    else if(buttonNumber == MessageBox.MsgResultListener.NO)
+                        Spider.super.close(activateNextWindow);
+                }, this);
     }
 
     // =================================================

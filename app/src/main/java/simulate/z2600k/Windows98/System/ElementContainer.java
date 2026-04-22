@@ -123,10 +123,8 @@ public class ElementContainer extends Element {
 
     public void onClick(int x, int y, boolean callSelfDoubleClick) {
         int cursor_x = getCursorX(), cursor_y = getCursorY();
-        boolean cancelDoubleClick = false;
-        if((lastTouches[0][0] - cursor_x) * (lastTouches[0][0] - cursor_x) + (lastTouches[0][1] - cursor_y) * (lastTouches[0][1] - cursor_y) > 4 * 4){  // подвинули курсор на более, чем 4 пикселя
-            cancelDoubleClick = true;
-        }
+        boolean cancelDoubleClick = (lastTouches[0][0] - cursor_x) * (lastTouches[0][0] - cursor_x) + (lastTouches[0][1] - cursor_y) * (lastTouches[0][1] - cursor_y) > 4 * 4;
+        // подвинули курсор на более, чем 4 пикселя
         if(startTouch != null) {
             Element el = startTouch;
             startTouch = null;
