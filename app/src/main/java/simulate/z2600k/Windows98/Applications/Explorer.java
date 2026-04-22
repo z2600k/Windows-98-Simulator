@@ -3,7 +3,6 @@ package simulate.z2600k.Windows98.Applications;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.os.FileObserver;
 
@@ -34,6 +33,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class Explorer extends DummyWindow {
@@ -72,7 +72,7 @@ public class Explorer extends DummyWindow {
         bigIcon = getBmp(iconBig);
         if(iconSmall == R.drawable.directory_open_2)
             folderBmp = getBmp(R.drawable.directory_closed_2);
-        initLinkContainer(new ArrayList<Link>());
+        initLinkContainer(new ArrayList<>());
         setupButtons();
         initFolderDropdown(directory);
         createTopMenu(isFolder);
@@ -140,27 +140,24 @@ public class Explorer extends DummyWindow {
         for(int i=0; i<9; i++)
             topButtons[i] = getBmp(topButtonsIds[i]);
         BigTopButtons bigTopButtons = new BigTopButtons(topButtons,
-                new int[][]{{15, 59}, {103, 134}, {140, 171}, {171, 202}, {202, 233}, {239, 270}, {276, 307}, {307, 338}, {344, 388}}, 9, new BigTopButtons.OnButtonPressListener() {
-            @Override
-            public void onButtonPress(int buttonNumber) {
-                Link activeLink = null;
-                if(linkContainer.topElement != null && linkContainer.topElement instanceof Link)  // && ((Link) linkContainer.topElement).selected){  // есть активный ярлык
-                    activeLink = (Link) linkContainer.topElement;
-                if(buttonNumber == 0 || buttonNumber == 1)  // Back / Up
-                    upOneLevel();
-                else if(buttonNumber == 6){  // Delete
-                    if(activeLink != null)
-                        activeLink.delete();
-                }
-                else if(buttonNumber == 3) {  // Copy
-                    if(activeLink != null)
-                        activeLink.copy();
-                }
-                else if(buttonNumber == 4){  // Paste
-                    linkContainer.paste();
-                }
-            }
-        });
+                new int[][]{{15, 59}, {103, 134}, {140, 171}, {171, 202}, {202, 233}, {239, 270}, {276, 307}, {307, 338}, {344, 388}}, 9, buttonNumber -> {
+                    Link activeLink = null;
+                    if(linkContainer.topElement != null && linkContainer.topElement instanceof Link)  // && ((Link) linkContainer.topElement).selected){  // есть активный ярлык
+                        activeLink = (Link) linkContainer.topElement;
+                    if(buttonNumber == 0 || buttonNumber == 1)  // Back / Up
+                        upOneLevel();
+                    else if(buttonNumber == 6){  // Delete
+                        if(activeLink != null)
+                            activeLink.delete();
+                    }
+                    else if(buttonNumber == 3) {  // Copy
+                        if(activeLink != null)
+                            activeLink.copy();
+                    }
+                    else if(buttonNumber == 4){  // Paste
+                        linkContainer.paste();
+                    }
+                });
             bigTopButtons.y = 49;
             addElement(bigTopButtons);
     }
@@ -277,6 +274,18 @@ public class Explorer extends DummyWindow {
                 link.parent = this;  // так как в случае MS-DOS не вызываются ни onDraw, ни onMouseOver
             bringClickedElementToFront = true;
             contextMenu = Windows98.win98contextMenu(this);  // показывается с помощью topElement
+        }
+
+        private void sortLinks() {
+            Collections.sort(elements, (o1, o2) -> {
+                Link link1 = (Link) o1, link2 = (Link) o2;
+                if (".My Documents".equals(link1.fullFilename)) return -1;
+                if (".My Documents".equals(link2.fullFilename)) return 1;
+                if (link1.isFolder != link2.isFolder) {
+                    return link1.isFolder ? -1 : 1;
+                }
+                return String.CASE_INSENSITIVE_ORDER.compare(link1.fullFilename, link2.fullFilename);
+            });
         }
 
         @Override
@@ -399,9 +408,8 @@ public class Explorer extends DummyWindow {
             scrollRange = 0;
 
             for (int i = 0; i < elements.size(); i++) {
-                if(!(elements.get(i) instanceof Link))
+                if(!(elements.get(i) instanceof Link lnk))
                     continue;
-                Link lnk = (Link) elements.get(i);
                 lnk.x = start_x + 75 * cur_x;
                 if(cur_x == linksInRow){
                     lnk.x = start_x;
@@ -547,17 +555,7 @@ public class Explorer extends DummyWindow {
             this.parentWindow = parentWindow;
             updateFiles();
             //  сортируем по имени
-            Collections.sort(elements, (o1, o2) -> {
-                Link link1 = (Link) o1, link2 = (Link) o2;
-                if(link1.isFolder == link2.isFolder)
-                    return link1.fullFilename.compareTo(link2.fullFilename);
-                else{
-                    if(link1.isFolder)
-                        return -1;
-                    else
-                        return 1;
-                }
-            });
+            sortLinks();
 
             // на рабочем столе есть симлинк в My Documents
             if(parentWindow != null && directory.equals(MyDocuments.getDesktopDirectory())){
@@ -575,22 +573,19 @@ public class Explorer extends DummyWindow {
             fileObserver = new FixedFileObserver(directory) {
                 @Override
                 public void onEvent(final int event, final String path) {
-                    WindowsView.handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            if(event == FileObserver.DELETE_SELF || event == FileObserver.MOVE_SELF){
-                                if(parentWindow != null)
-                                    parentWindow.close();
-                            }
-                            else {
-                                if(parentWindow != null && parentWindow.closed)
-                                    return;
-                                if(!directory.exists())
-                                    return;
-                                updateFiles();
-                                if (parentWindow != null)
-                                    parentWindow.updateWindow();
-                            }
+                    WindowsView.handler.post(() -> {
+                        if(event == FileObserver.DELETE_SELF || event == FileObserver.MOVE_SELF){
+                            if(parentWindow != null)
+                                parentWindow.close();
+                        }
+                        else {
+                            if(parentWindow != null && parentWindow.closed)
+                                return;
+                            if(!directory.exists())
+                                return;
+                            updateFiles();
+                            if (parentWindow != null)
+                                parentWindow.updateWindow();
                         }
                     });
                 }
@@ -631,12 +626,11 @@ public class Explorer extends DummyWindow {
                 if(!newFiles.contains(link.fullFilename))
                     link.removeFromParent();
             }
-            // добавляем новые
-            for(String filename : newFiles){
-                if(!oldFiles.contains(filename)) {
+            // 添加新文件（包括隐藏文件和点开头的文件）
+            for (String filename : newFiles) {
+                if (!oldFiles.contains(filename)) {
                     File file = new File(directory, filename);
-                    boolean ok = !file.isHidden() && !filename.startsWith(".")&&
-                            !(directory.equals(MyDocuments.getFilesDir()) && filename.equals("Desktop"));
+                    boolean ok = !(directory.equals(MyDocuments.getFilesDir()) && filename.equals("Desktop"));
                     if (ok && (fileProvider == null || fileProvider.acceptFile(file))) {
                         Link newLink = new Link(file, parentWindow);
                         newLink.parent = this;
@@ -645,6 +639,7 @@ public class Explorer extends DummyWindow {
                 }
             }
 
+            sortLinks();               // 重新排序（不区分大小写）
             updateLinkPositions();
         }
 
@@ -683,7 +678,7 @@ public class Explorer extends DummyWindow {
     private static void copyDirectory(File source, File target) throws IOException {
         if(!target.exists())
             target.mkdir();
-        for(String f : source.list())
+        for(String f : Objects.requireNonNull(source.list()))
             copy(new File(source, f), new File(target, f));
     }
     //
@@ -729,19 +724,19 @@ public class Explorer extends DummyWindow {
                     };
                     fileObserver.startWatching();
                     fileObservers.put(file, fileObserver);
-                    fixedObservers.put(file, new HashSet<FixedFileObserver>());
+                    fixedObservers.put(file, new HashSet<>());
                 }
 
-                fixedObservers.get(file).add(this);
+                Objects.requireNonNull(fixedObservers.get(file)).add(this);
             }
         }
 
         public void stopWatching() {
             synchronized (fixedObservers) {
-                fixedObservers.get(file).remove(this);
-                if(fixedObservers.get(file).isEmpty()){  // мы были последними, кто смотрел за файлом
+                Objects.requireNonNull(fixedObservers.get(file)).remove(this);
+                if(Objects.requireNonNull(fixedObservers.get(file)).isEmpty()){  // мы были последними, кто смотрел за файлом
                     fixedObservers.remove(file);
-                    fileObservers.get(file).stopWatching();
+                    Objects.requireNonNull(fileObservers.get(file)).stopWatching();
                     fileObservers.remove(file);
                 }
             }
