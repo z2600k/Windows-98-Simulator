@@ -43,20 +43,17 @@ public class Solitaire extends BaseSolitaire {
     private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);  // для (точного!) таймера
     private ScheduledFuture<?> scheduledFuture;
     private boolean timedGame = getSharedPreferences().getBoolean(OptionsWindow.timedGameString, true);
-    Runnable timerRunnable = new Runnable() {
-        @Override
-        public void run() {
-            synchronized (Solitaire.this) {
-                time++;
-                if (time % 10 == 0) {  // снимаем очки каждые 10 секунд
-                    score -= 2;
-                    if (score < 0)
-                        score = 0;
-                }
+    Runnable timerRunnable = () -> {
+        synchronized (Solitaire.this) {
+            time++;
+            if (time % 10 == 0) {  // снимаем очки каждые 10 секунд
+                score -= 2;
+                if (score < 0)
+                    score = 0;
             }
-            Solitaire.this.shouldRedraw = true;
-            WindowsView.windowsView.postInvalidate();
         }
+        Solitaire.this.shouldRedraw = true;
+        WindowsView.windowsView.postInvalidate();
     };
     // переменные для win
     Bitmap winBmp = createBitmap(Windows98.SCREEN_WIDTH - 4, Windows98.SCREEN_HEIGHT - 87, Bitmap.Config.ARGB_8888);
@@ -85,7 +82,7 @@ public class Solitaire extends BaseSolitaire {
                 cur_x = cardStack.x - dst.left;
                 cur_y = cardStack.y - dst.top;
                 // значения из слитых исходников windows 2000 ;)
-                cur_vx = ((int) randomInRange(-65, 45)) / 10;
+                cur_vx = (float) ((int) randomInRange(-65, 45)) / 10;
                 if(Math.abs(cur_vx) < 2){  // скорость по иксу слишком маленькая - карта будет двигаться очень долго
                     cur_vx = -2;
                 }
@@ -243,11 +240,34 @@ public class Solitaire extends BaseSolitaire {
         p.setColor(Color.WHITE);
         canvas.drawRect(x + 6, y + height - 22, x + width - 6, y + height - 6, p);
         // рисуем текст
-        p_system.setTextAlign(Paint.Align.RIGHT);
+
         p_system.setColor(Color.BLACK);
         p_game.setColor(Color.BLACK);
-        canvas.drawText("得分: " + score + (timedGame? " 时间: " + time : ""), x + width - 12, y + height - 9, p_system);
-        p_system.setTextAlign(Paint.Align.LEFT);
+        Paint textPaint = new Paint(p_game);
+        Paint numPaint = new Paint(p_system);
+
+        float baseX = x + width - 12;
+        float baseY = y + height - 9;
+
+// 先绘制时间（右侧部分）
+        if (timedGame) {
+            String timeText = "时间: ";
+            String timeNum = String.valueOf(time);
+            float timeTextW = textPaint.measureText(timeText);
+            float timeNumW = numPaint.measureText(timeNum);
+            canvas.drawText(timeText, baseX - timeTextW - timeNumW, baseY, textPaint);
+            canvas.drawText(timeNum, baseX - timeNumW, baseY, numPaint);
+            baseX -= (timeTextW + timeNumW + 5); // 左移基准点
+        }
+
+// 再绘制得分（左侧部分）
+        String scoreText = "得分: ";
+        String scoreNum = String.valueOf(score);
+        float scoreTextW = textPaint.measureText(scoreText);
+        float scoreNumW = numPaint.measureText(scoreNum);
+        canvas.drawText(scoreText, baseX - scoreTextW - scoreNumW, baseY, textPaint);
+        canvas.drawText(scoreNum, baseX - scoreNumW, baseY, numPaint);
+
         if(state == WIN){
             tmp.left = dst.left + x;
             tmp.top = dst.top + y;
@@ -358,7 +378,7 @@ public class Solitaire extends BaseSolitaire {
     private void startTimer(){
         time = 0;
         if(timedGame)
-            scheduledFuture = scheduler.scheduleAtFixedRate(timerRunnable, 1, 1, TimeUnit.SECONDS);
+            scheduledFuture = scheduler.scheduleWithFixedDelay(timerRunnable, 1, 1, TimeUnit.SECONDS);
         //WindowsView.handler.postDelayed(timerRunnable, 1000);
     }
 
@@ -373,12 +393,9 @@ public class Solitaire extends BaseSolitaire {
         WindowsView.handler.removeCallbacks(winRunnable);
         for(int i=0; i<12; i++)
             elements.get(i).visible = false;
-        new MessageBox("纸牌", "重新发牌?", MessageBox.YESNO, MessageBox.WARNING, new MessageBox.MsgResultListener() {
-            @Override
-            public void onMsgResult(int buttonNumber) {
-                if(buttonNumber == YES)
-                    reset();
-            }
+        new MessageBox("纸牌", "重新发牌?", MessageBox.YESNO, MessageBox.WARNING, buttonNumber -> {
+            if(buttonNumber == MessageBox.MsgResultListener.YES)
+                reset();
         }, this);
     }
 
