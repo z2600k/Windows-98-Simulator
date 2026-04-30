@@ -5,15 +5,9 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Point;
 import android.os.Build;
-import android.util.Log;
 import android.view.PointerIcon;
 
-import androidx.annotation.RequiresApi;
-
 import simulate.z2600k.Windows98.MainActivity;
-import simulate.z2600k.Windows98.WindowsView;
-
-import static simulate.z2600k.Windows98.System.Element.TAG;
 
 public class Cursor {
     private Bitmap bitmap;
@@ -51,7 +45,7 @@ public class Cursor {
         return pointerIcon;
     }
 
-    @TargetApi(24)
+    @androidx.annotation.RequiresApi(24)
     public void recreatePointerIcon(){
         scaledBmp = scaledBmp.copy(Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.O ? Bitmap.Config.HARDWARE : Bitmap.Config.ARGB_8888, false);
         pointerIcon = PointerIcon.create(scaledBmp, x * coefficient, y * coefficient);

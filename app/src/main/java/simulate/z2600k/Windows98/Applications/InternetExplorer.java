@@ -72,30 +72,27 @@ public class InternetExplorer extends DummyWindow {
         for(int i = 0; i < 9; i++)
             topButtons[i] = getBmp(topButtonsIds[i]);
         BigTopButtons bigTopButtons = new BigTopButtons(topButtons,
-                new int[][]{{15, 72}, {129, 173}, {173, 217}, {217, 261}, {267, 311}, {311, 355}, {355, 399}, {405, 449}, {449, 493}}, 8, new BigTopButtons.OnButtonPressListener() {
-            @Override
-            public void onButtonPress(int buttonNumber) {
-                MyWebView webView = webViewContainer.webView;
-                if(buttonNumber == 0) {
-                    if(webView.canGoBack()) {
-                        WebBackForwardList backForwardList = webView.copyBackForwardList();
-                        WebHistoryItem previousPage = backForwardList.getItemAtIndex(backForwardList.getCurrentIndex() - 1);
-                        webView.updateUrl(previousPage.getUrl());
-                        setWebPageTitle(previousPage.getTitle(), previousPage.getUrl());
-                        webView.goBack();
+                new int[][]{{15, 72}, {129, 173}, {173, 217}, {217, 261}, {267, 311}, {311, 355}, {355, 399}, {405, 449}, {449, 493}}, 8, buttonNumber -> {
+                    MyWebView webView = webViewContainer.webView;
+                    if(buttonNumber == 0) {
+                        if(webView.canGoBack()) {
+                            WebBackForwardList backForwardList = webView.copyBackForwardList();
+                            WebHistoryItem previousPage = backForwardList.getItemAtIndex(backForwardList.getCurrentIndex() - 1);
+                            webView.updateUrl(previousPage.getUrl());
+                            setWebPageTitle(previousPage.getTitle(), previousPage.getUrl());
+                            webView.goBack();
+                        }
                     }
-                }
-                else if(buttonNumber == 1){
-                    webView.stopLoading();
-                }
-                else if(buttonNumber == 2){
-                    webView.reload();
-                }
-                else if(buttonNumber == 3){
-                    webView.loadUrl("about:blank");
-                }
-            }
-        });
+                    else if(buttonNumber == 1){
+                        webView.stopLoading();
+                    }
+                    else if(buttonNumber == 2){
+                        webView.reload();
+                    }
+                    else if(buttonNumber == 3){
+                        webView.loadUrl("about:blank");
+                    }
+                });
         bigTopButtons.y = 49;
         addElement(bigTopButtons);
 
@@ -399,12 +396,7 @@ public class InternetExplorer extends DummyWindow {
             else if(reason == DownloadManager.ERROR_FILE_ERROR)
                 text += "磁盘写入错误。";
             //Log.d(TAG, "reason: " + reason);
-            new MessageBox("文件下载", text, MessageBox.OK, MessageBox.ERROR, new MessageBox.MsgResultListener() {
-                @Override
-                public void onMsgResult(int buttonNumber) {
-                    close();
-                }
-            }, this);
+            new MessageBox("文件下载", text, MessageBox.OK, MessageBox.ERROR, buttonNumber -> close(), this);
         }
 
         private String secondsToString(int time){  // строка с пробелом на конце!
@@ -729,10 +721,10 @@ public class InternetExplorer extends DummyWindow {
 
         ButtonList view = new ButtonList();
         ButtonList toolbars = new ButtonList();
-        ButtonInList standartButtons = new ButtonInList("标准按钮");
-        standartButtons.check = true;
-        standartButtons.checkActive = true;
-        toolbars.elements.add(standartButtons);
+        ButtonInList standardButtons = new ButtonInList("标准按钮");
+        standardButtons.check = true;
+        standardButtons.checkActive = true;
+        toolbars.elements.add(standardButtons);
         ButtonInList addressBar = new ButtonInList("地址栏");
         addressBar.check = true;
         addressBar.checkActive = true;

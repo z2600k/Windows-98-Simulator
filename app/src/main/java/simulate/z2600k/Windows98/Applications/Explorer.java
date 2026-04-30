@@ -776,10 +776,10 @@ public class Explorer extends DummyWindow {
         edit.elements.add(new ButtonInList("反向选择"));
         ButtonList view = new ButtonList();
         ButtonList toolbars = new ButtonList();
-        ButtonInList standartButtons = new ButtonInList("标准按钮");
-        standartButtons.check = true;
-        standartButtons.checkActive = true;
-        toolbars.elements.add(standartButtons);
+        ButtonInList standardButtons = new ButtonInList("标准按钮");
+        standardButtons.check = true;
+        standardButtons.checkActive = true;
+        toolbars.elements.add(standardButtons);
         ButtonInList addressBar = new ButtonInList("地址栏");
         addressBar.check = true;
         addressBar.checkActive = true;

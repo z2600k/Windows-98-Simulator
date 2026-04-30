@@ -9,6 +9,7 @@ import simulate.z2600k.Windows98.WindowsView;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 
 public class MyDocuments extends Explorer {  // Папка, в которой содержатся созданные пользователем файлы
     private File directory;
@@ -58,7 +59,7 @@ public class MyDocuments extends Explorer {  // Папка, в которой с
             }
             else{
                 String relativePath = directory.getCanonicalPath()
-                        .substring(getExternalStorageDirectory().getCanonicalPath().length())
+                        .substring(Objects.requireNonNull(getExternalStorageDirectory()).getCanonicalPath().length())
                         .replace("/", "\\");
                 if(!relativePath.isEmpty())
                     return "D:" + relativePath;

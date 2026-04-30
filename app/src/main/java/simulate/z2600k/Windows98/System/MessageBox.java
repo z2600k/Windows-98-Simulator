@@ -68,18 +68,13 @@ public class MessageBox extends DialogWindow {
     }
 
     private static Bitmap getIcon(int icon){
-        switch (icon){
-            case WARNING:
-                return getBmp(R.drawable.msg_warning_0);
-            case ERROR:
-                return getBmp(R.drawable.msg_error_0);
-            case INFO:
-                return getBmp(R.drawable.msg_information_0);
-            case QUESTION:
-                return getBmp(R.drawable.msg_question_0);
-            default:
-                return null;
-        }
+        return switch (icon) {
+            case WARNING -> getBmp(R.drawable.msg_warning_0);
+            case ERROR -> getBmp(R.drawable.msg_error_0);
+            case INFO -> getBmp(R.drawable.msg_information_0);
+            case QUESTION -> getBmp(R.drawable.msg_question_0);
+            default -> null;
+        };
     }
 
     private static int getWidth(String text, int buttons){  // для того, чтобы запихнуть в вызов super()

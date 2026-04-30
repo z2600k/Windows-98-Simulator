@@ -63,9 +63,9 @@ public class Button extends Element {
             text_x++;*/
         int text_y;
         if(!cool)
-            text_y = (int)((height / 2 - ((p.descent() + p.ascent()) / 2))) + 2;  // google :(
+            text_y = (int)(((float) height / 2 - ((p.descent() + p.ascent()) / 2))) + 2;  // google :(
         else
-            text_y = (int)(((height - 1) / 2 - ((p.descent() + p.ascent()) / 2))) + 1;
+            text_y = (int)(((float) (height - 1) / 2 - ((p.descent() + p.ascent()) / 2))) + 1;
         if(pressed && cool) {
             text_x++;
             text_y++;

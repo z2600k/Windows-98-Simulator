@@ -42,17 +42,14 @@ public class ButtonInList extends Element implements CloseableMenu {
     public boolean isWindowsUpdate = false;
     static Bitmap arrowActive, arrowInactive, circleActive, circleInactive, checkActiveBmp, checkInactive;
 
-    private Runnable showChildRunnable = new Runnable() {
-        @Override
-        public void run() {
-            for(Element b : parent.elements){
-                ((ButtonInList) b).showChild = false;
-                ((ButtonInList) b).blue = false;
-            }
-            ButtonInList.this.showChild = true;
-            ButtonInList.this.blue = true;
-            WindowsView.windowsView.invalidate();
+    private Runnable showChildRunnable = () -> {
+        for(Element b : parent.elements){
+            ((ButtonInList) b).showChild = false;
+            ((ButtonInList) b).blue = false;
         }
+        ButtonInList.this.showChild = true;
+        ButtonInList.this.blue = true;
+        WindowsView.windowsView.invalidate();
     };
 
     public ButtonInList(String text) {
@@ -228,6 +225,7 @@ public class ButtonInList extends Element implements CloseableMenu {
                 child.onDraw(new Canvas(), 0, 0);
         }
         if(showChild && hasChild){
+            assert child != null;
             child.parentThick = parentThick;
             if(child.onMouseOver(x - child.x, y - child.y, touch)) {
                 blue = true;
@@ -246,8 +244,10 @@ public class ButtonInList extends Element implements CloseableMenu {
             }
             else if(!showChild)
                 startRunnable();
-            if(hasChild)
+            if(hasChild) {
+                assert child != null;
                 child.onMouseLeave();
+            }
             return true;
         }
         else

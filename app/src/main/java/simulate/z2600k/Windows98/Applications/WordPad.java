@@ -24,16 +24,14 @@ public class WordPad extends BaseNotepad {
         // top menu
         ButtonList file = new ButtonList();
         ButtonInList new_ = new ButtonInList("新建...", "Ctrl+N");
-        new_.action = parent -> {
-            performActionWithSaveCheck(() -> {
-                textBox.setText("");
-                textChanged = false;
-                openedFile = null;
-                setTitle("文档 - 写字板");
-                textBox.parent.inputFocus = textBox;
-                textBox.setActive(true);
-            });
-        };
+        new_.action = parent -> performActionWithSaveCheck(() -> {
+            textBox.setText("");
+            textChanged = false;
+            openedFile = null;
+            setTitle("文档 - 写字板");
+            textBox.parent.inputFocus = textBox;
+            textBox.setActive(true);
+        });
         file.elements.add(new_);
         ButtonInList open = new ButtonInList("打开...", "Ctrl+O");
         open.action = parent -> open();

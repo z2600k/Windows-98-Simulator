@@ -93,7 +93,6 @@ public class AndroidApps extends Explorer {
             apps.clear();
             Intent intent = new Intent(Intent.ACTION_MAIN, null);
             intent.addCategory(Intent.CATEGORY_LAUNCHER);
-
             PackageManager packageManager = context.getPackageManager();
             List<ResolveInfo> allApps = packageManager.queryIntentActivities(intent, 0);
             Set<String> packages = new HashSet<>();  // так как приложения могут повторяться, если у них несколько activities

@@ -4,7 +4,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Shader;
-import android.graphics.ColorSpace;
 import android.graphics.LinearGradient;
 import android.graphics.Rect;
 
@@ -396,10 +395,9 @@ public class Window extends ElementContainer {
     private void activateNextWindow(){
         for (int i = Windows98.windows98.elements.size() - 1; i >= 0; i--) {
             Element element = Windows98.windows98.elements.get(i);
-            if (element instanceof Window) {
-                Window window = (Window) element;
+            if (element instanceof Window window) {
                 if(window.visible) {  // не свёрнуто
-                    ((Window) element).makeActive();
+                    window.makeActive();
                     break;
                 }
             }

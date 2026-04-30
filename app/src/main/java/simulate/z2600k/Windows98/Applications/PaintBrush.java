@@ -9,9 +9,7 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.widget.Toast;
 
-import com.google.android.material.snackbar.Snackbar;
 import simulate.z2600k.Windows98.R;
 import simulate.z2600k.Windows98.System.AboutWindow;
 import simulate.z2600k.Windows98.System.ButtonInList;
@@ -609,13 +607,8 @@ public class PaintBrush extends Window implements FileDialog.ActionOnSave, Scrol
     }
     private void open() {
         performActionWithSaveCheck(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        new FileDialog(true, supportedFormats, "位图",
-                                PaintBrush.this, getBmpWriter(), FileDialog.getDir(openedFile));
-                    }
-                }
+                () -> new FileDialog(true, supportedFormats, "位图",
+                        PaintBrush.this, getBmpWriter(), FileDialog.getDir(openedFile))
         );
     }
     private void save(){
@@ -630,12 +623,7 @@ public class PaintBrush extends Window implements FileDialog.ActionOnSave, Scrol
     @Override
     public void close(final boolean activateNextWindow) {
         performActionWithSaveCheck(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        PaintBrush.super.close(activateNextWindow);
-                    }
-                }
+                () -> PaintBrush.super.close(activateNextWindow)
         );
     }
 
@@ -657,18 +645,15 @@ public class PaintBrush extends Window implements FileDialog.ActionOnSave, Scrol
         if(imageChanged) {
             // спрашиваем пользователя, хочет ли он сохранить файл
             new MessageBox("画图", "将更改后的结果保存到" + (openedFile == null ? "未命名" : openedFile.getName()) + "吗?",
-                    MessageBox.YESNOCANCEL, MessageBox.WARNING, new MessageBox.MsgResultListener() {
-                @Override
-                public void onMsgResult(int buttonNumber) {
-                    if(buttonNumber == YES){
-                        setActionOnSave(action);
-                        save();
-                    }
-                    else if(buttonNumber == NO){
-                        action.run();
-                    }
-                }
-            }, this);
+                    MessageBox.YESNOCANCEL, MessageBox.WARNING, buttonNumber -> {
+                        if(buttonNumber == MessageBox.MsgResultListener.YES){
+                            setActionOnSave(action);
+                            save();
+                        }
+                        else if(buttonNumber == MessageBox.MsgResultListener.NO){
+                            action.run();
+                        }
+                    }, this);
         }
         else
             action.run();
@@ -818,8 +803,8 @@ public class PaintBrush extends Window implements FileDialog.ActionOnSave, Scrol
 
         @Override
         public void onClick(int x, int y) {
-            for(Element e : group){
-                ((ImageSelectButton) e).active = false;
+            for(ImageSelectButton e : group){
+                e.active = false;
             }
             active = true;
             pressed = false;

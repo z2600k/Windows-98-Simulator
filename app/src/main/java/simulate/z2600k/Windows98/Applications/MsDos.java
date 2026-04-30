@@ -5,7 +5,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.widget.Toast;
 
 import com.google.android.material.snackbar.Snackbar;
 import simulate.z2600k.Windows98.R;
@@ -184,9 +183,8 @@ public class MsDos extends BaseNotepad {
                     print(driveLabel);
                     print(" Directory of " + explorer.fullPath + "\n");
                     for(Element element : explorer.linkContainer.elements){
-                        if(!(element instanceof Link))
+                        if(!(element instanceof Link link))
                             continue;
-                        Link link = (Link) element;
                         String newFilename = link.fullFilename.toUpperCase();
                         String extension = "";
                         if(newFilename.contains(".")) {
@@ -437,9 +435,8 @@ public class MsDos extends BaseNotepad {
         }
         else{
             for(Element element : explorer.linkContainer.elements){
-                if(!(element instanceof Link))
+                if(!(element instanceof Link link))
                     continue;
-                Link link = (Link) element;
                 if(!link.isFolder && link.fullFilename.equalsIgnoreCase(filename)){
                     if(filename.equalsIgnoreCase("command.com")){
                         print(initialText);

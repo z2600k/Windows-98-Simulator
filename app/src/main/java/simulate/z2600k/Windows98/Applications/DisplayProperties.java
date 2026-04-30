@@ -6,9 +6,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.widget.Toast;
 
-import com.google.android.material.snackbar.Snackbar;
 import simulate.z2600k.Windows98.R;
 import simulate.z2600k.Windows98.System.Button;
 import simulate.z2600k.Windows98.System.DropdownList;
@@ -180,7 +178,7 @@ public class DisplayProperties extends TabControlWindow {
             if(curWallpaper == null)  // в картинке изначально синий монитор
                 return;
             if(wallpaperMode.selectedItem == Windows98.CENTER)
-                canvas.drawBitmap(curWallpaper, x + (126 + 278) / 2 - curWallpaper.getWidth() / 2, y + (77 + 189) / 2 - curWallpaper.getHeight() / 2, null);
+                canvas.drawBitmap(curWallpaper, x + (float) (126 + 278) / 2 - (float) curWallpaper.getWidth() / 2, y + (float) (77 + 189) / 2 - (float) curWallpaper.getHeight() / 2, null);
             else if(wallpaperMode.selectedItem == Windows98.STRETCH)
                 canvas.drawBitmap(curWallpaper, x + 126, y + 77, null);
             else {
@@ -263,13 +261,10 @@ public class DisplayProperties extends TabControlWindow {
                 close();
                 new MessageBox("系统设置改变",
                         "必须重新启动计算机才能使新的设置生效。\n\n想现在就重新启动计算机吗?",
-                        MessageBox.YESNO, MessageBox.QUESTION, new MessageBox.MsgResultListener() {
-                    @Override
-                    public void onMsgResult(int buttonNumber) {
-                        if (buttonNumber == YES)
-                            Windows98.windows98.restart();
-                    }
-                }, this);
+                        MessageBox.YESNO, MessageBox.QUESTION, buttonNumber -> {
+                            if (buttonNumber == MessageBox.MsgResultListener.YES)
+                                Windows98.windows98.restart();
+                        }, this);
             }
         }
     }

@@ -118,8 +118,8 @@ public class Windows98 extends ElementContainer {
                 }
                 catch (InterruptedException ignored) {}
 
-                WindowsView.cursor_x = Windows98.SCREEN_WIDTH / 2;
-                WindowsView.cursor_y = Windows98.SCREEN_HEIGHT / 2;
+                WindowsView.cursor_x = (float) Windows98.SCREEN_WIDTH / 2;
+                WindowsView.cursor_y = (float) Windows98.SCREEN_HEIGHT / 2;
                 cursor = new Cursor(getBmp(R.drawable.cursor_wait));
                 setCursor(cursor);  // чтобы отобразить курсор в tauon
                 delayTime = 2500;
@@ -250,7 +250,7 @@ public class Windows98 extends ElementContainer {
         canvas.drawColor(Color.parseColor("#008080"));  // рисуем голубой (зелёный) фон рабочего стола
         if(wallpaper != null){
             if(wallpaperMode == CENTER)
-                canvas.drawBitmap(wallpaper, SCREEN_WIDTH / 2 - wallpaper.getWidth() / 2, SCREEN_HEIGHT / 2 - wallpaper.getHeight() / 2, null);
+                canvas.drawBitmap(wallpaper, (float) SCREEN_WIDTH / 2 - (float) wallpaper.getWidth() / 2, (float) SCREEN_HEIGHT / 2 - (float) wallpaper.getHeight() / 2, null);
             else if(wallpaperMode == STRETCH)
                 canvas.drawBitmap(wallpaper, 0, 0, null);
             else
@@ -403,16 +403,14 @@ public class Windows98 extends ElementContainer {
         elements.add(taskbar);
         // loading some sounds
         startupSound = MediaPlayer.create(context, R.raw.the_microsoft_sound);
-        startupSound.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {  // для экономии памяти
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-                if (startupSound.isPlaying())
-                    startupSound.stop();
-                //deleteMplayer(startupSound);
-                startupSound.reset();
-                startupSound.release();
-                startupSound = null;
-            }
+        // для экономии памяти
+        startupSound.setOnCompletionListener(mp -> {
+            if (startupSound.isPlaying())
+                startupSound.stop();
+            //deleteMplayer(startupSound);
+            startupSound.reset();
+            startupSound.release();
+            startupSound = null;
         });
         shutdownSound = MediaPlayer.create(context, R.raw.logoff);
         chord = MediaPlayer.create(context, R.raw.chord);
@@ -431,19 +429,17 @@ public class Windows98 extends ElementContainer {
         boolean narrow = !WIDESCREEN;
         links.elements.add(new Link(1, 0, "回收站", getBmp(R.drawable.recycle_bin_empty_0), false, RecycleBin.class));
         links.elements.add(new Link(0, 1, "我的文档", getBmp(R.drawable.directory_open_file_mydocs_0), false, MyDocuments.class));
-        links.elements.add(new Link(1, 1, "Android (D:)", getBmp(R.drawable.cd_drive_5), false, p -> {
-            context.checkWriteExternalPermission(new MainActivity.PermissionResultListener() {
-                @Override
-                public void onPermissionGranted() {
-                    MyDocuments.createDriveD();
-                }
+        links.elements.add(new Link(1, 1, "Android (D:)", getBmp(R.drawable.cd_drive_5), false, p -> context.checkWriteExternalPermission(new MainActivity.PermissionResultListener() {
+            @Override
+            public void onPermissionGranted() {
+                MyDocuments.createDriveD();
+            }
 
-                @Override
-                public void onPermissionDenied() {
-                    MyDocuments.diskNotAccessible(null);
-                }
-            });
-        }));
+            @Override
+            public void onPermissionDenied() {
+                MyDocuments.diskNotAccessible(null);
+            }
+        })));
         links.elements.add(new Link(1, 2, "Windows Media Player", getBmp(R.drawable.media_player_0), true, MPlayer.class));
         links.elements.add(new Link(1, 3, "画图", getBmp(R.drawable.paint_2), true, PaintBrush.class));
         links.elements.add(new Link(0, 2, "Internet Explorer", getBmp(R.drawable.iexplore_32528_0), false, InternetExplorer.class));

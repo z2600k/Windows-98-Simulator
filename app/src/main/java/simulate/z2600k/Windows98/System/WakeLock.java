@@ -1,10 +1,6 @@
 package simulate.z2600k.Windows98.System;
 
-import android.util.Log;
 import android.view.WindowManager;
-import android.widget.Toast;
-
-import static simulate.z2600k.Windows98.System.Element.TAG;
 
 public class WakeLock {
     private static int videoPlayers = 0;

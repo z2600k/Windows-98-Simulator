@@ -4,8 +4,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
 
-import com.google.android.material.snackbar.Snackbar;
-
 import simulate.z2600k.Windows98.R;
 import simulate.z2600k.Windows98.System.Button;
 import simulate.z2600k.Windows98.System.Element;
@@ -72,33 +70,21 @@ public class Run extends BaseNotepad {
         if(text.endsWith(".exe"))
             text = text.substring(0, text.length() - 4);
 
-        switch (text){
-            case "mspaint": case "paint":
-                return PaintBrush.class;
-            case "explorer":
-                return DriveC.class;
-            case "calculator": case "calc":
-                return Calculator.class;
-            case "solitaire": case "sol":
-                return Solitaire.class;
-            case "minesweeper": case "winmine":
-                return Minesweeper.class;
-            case "iexplore":
-                return InternetExplorer.class;
-            case "wordpad":
-                return WordPad.class;
-            case "notepad":
-                return Notepad.class;
-            case "freecell":
-                return FreeCell.class;
-            case "mplayer2":
-                return MPlayer.class;
-            case "control":
-                return ControlPanel.class;
-            case "cmd":
-                return MsDos.class;
-        }
-        return null;
+        return switch (text) {
+            case "mspaint", "paint" -> PaintBrush.class;
+            case "explorer" -> DriveC.class;
+            case "calculator", "calc" -> Calculator.class;
+            case "solitaire", "sol" -> Solitaire.class;
+            case "minesweeper", "winmine" -> Minesweeper.class;
+            case "iexplore" -> InternetExplorer.class;
+            case "wordpad" -> WordPad.class;
+            case "notepad" -> Notepad.class;
+            case "freecell" -> FreeCell.class;
+            case "mplayer2" -> MPlayer.class;
+            case "control" -> ControlPanel.class;
+            case "cmd" -> MsDos.class;
+            default -> null;
+        };
     }
 
     @Override

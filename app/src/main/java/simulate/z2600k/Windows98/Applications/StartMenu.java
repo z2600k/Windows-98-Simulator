@@ -6,7 +6,6 @@ import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.net.Uri;
 
-import simulate.z2600k.Windows98.BuildConfig;
 import simulate.z2600k.Windows98.R;
 import simulate.z2600k.Windows98.System.ButtonInList;
 import simulate.z2600k.Windows98.System.ButtonList;
@@ -157,15 +156,11 @@ public class StartMenu extends Element implements CloseableMenu {
         settings.elements.add(new ButtonInList("活动桌面",
                 getBmp(R.drawable.desktop_3), false, activeDesktop));
         settings.elements.add(new Separator());
-        OnClickRunnable windowsUpdateRunnable = new OnClickRunnable() {
-            @Override
-            public void run(Element parent) {  // открываем страницу с нашим приложением
-                final String appPackageName = BuildConfig.APPLICATION_ID;
-                try {
-                    context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.lr_soft_windows98simulator")));
-                } catch (android.content.ActivityNotFoundException e) {
-                    context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.lr_soft_windows98simulator")));
-                }
+        OnClickRunnable windowsUpdateRunnable = parent -> {  // открываем страницу с нашим приложением
+            try {
+                context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.lr_soft_windows98simulator")));
+            } catch (android.content.ActivityNotFoundException e) {
+                context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.lr_soft_windows98simulator")));
             }
         };
         ButtonInList windowsUpdate = new ButtonInList("Windows Update...",

@@ -141,10 +141,9 @@ public class Card extends Element {
 
     public void doubleClickAction() {  // по двойному клику карта пытается переместиться в одну из верхних стопок
         // так как карта уходит из CardStack после нажатия, она не получает onDoubleClick
-        if(!(parent.parent instanceof Solitaire))
+        if(!(parent.parent instanceof Solitaire parentWindow))
             return;
         CardStack parentStack = (CardStack) parent;
-        Solitaire parentWindow = (Solitaire) parent.parent;
         boolean top = parentStack.top() == this;
         if(parentStack instanceof Solitaire.SuitStack)  // нет смысла, уже в верхней стопке
             return;

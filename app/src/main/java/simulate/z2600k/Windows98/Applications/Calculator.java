@@ -32,8 +32,8 @@ public class Calculator extends Window {
     private double memory = 0;
 
     private static String toString(double number){
-        String returnValue = String.valueOf(number).replaceAll(",", ".").toLowerCase()
-                .replaceAll("e", "e+");
+        String returnValue = String.valueOf(number).replace(",", ".").toLowerCase()
+                .replace("e", "e+");
         if(returnValue.endsWith(".0"))
             returnValue = returnValue.substring(0, returnValue.length() - 2);
         return returnValue;
@@ -349,9 +349,8 @@ public class Calculator extends Window {
         if(key.equals("C"))
             return;
         for(Element element : elements){
-            if(!(element instanceof Button))
+            if(!(element instanceof Button b))
                 continue;
-            Button b = (Button) element;
             if(key.equalsIgnoreCase(b.text)
                     || (key.equals("DEL") && b.text.equals("退格"))
                     || (key.equals("\n") && b.text.equals("="))) {

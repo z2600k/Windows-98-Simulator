@@ -7,6 +7,10 @@ import android.graphics.Color;
 import android.view.ActionMode;
 import android.webkit.WebView;
 
+import androidx.annotation.NonNull;
+
+import java.util.Objects;
+
 import simulate.z2600k.Windows98.Applications.InternetExplorer;
 import simulate.z2600k.Windows98.Applications.WebViewContainer;
 import simulate.z2600k.Windows98.System.ScrollBar;
@@ -115,7 +119,7 @@ public class MyWebView extends WebView {
     }
 
     @Override
-    public void loadUrl(String url) {
+    public void loadUrl(@NonNull String url) {
         updateUrl(url);
         super.loadUrl(url);
     }
@@ -132,7 +136,7 @@ public class MyWebView extends WebView {
 
     @Override
     public void reload() {
-        if(!getUrl().startsWith("file:///android_asset/"))
+        if(!Objects.requireNonNull(getUrl()).startsWith("file:///android_asset/"))
             super.reload();
         else if(canGoBack())
             goBack();

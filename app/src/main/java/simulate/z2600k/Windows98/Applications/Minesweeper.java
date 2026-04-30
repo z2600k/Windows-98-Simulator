@@ -437,6 +437,7 @@ public class Minesweeper extends Window {
 
         while(!shouldOpen.isEmpty()){
             Point cur = shouldOpen.poll();
+            assert cur != null;
             int x = cur.x, y = cur.y;
             if(cur_field[x][y] == FLAG)  // ошибочный флажок
                 minesLeft++;
@@ -465,7 +466,7 @@ public class Minesweeper extends Window {
 
     private void startTimer(){
         timer = 1;
-        scheduledFuture = scheduler.scheduleAtFixedRate(timerRunnable, 1, 1, TimeUnit.SECONDS);
+        scheduledFuture = scheduler.scheduleWithFixedDelay(timerRunnable, 1, 1, TimeUnit.SECONDS);
         //WindowsView.handler.postDelayed(timerRunnable, 1000);
     }
     private void stopTimer(){

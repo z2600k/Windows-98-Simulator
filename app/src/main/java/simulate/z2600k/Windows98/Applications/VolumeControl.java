@@ -34,14 +34,11 @@ public class VolumeControl extends ElementContainer {  // громкость в 
 
         mute = new CheckBox("静音");
         Taskbar.trayVolume.bmp = mute.checked? volumeSndMuted : volumeSnd;
-        mute.onCheckChange = new Runnable() {
-            @Override
-            public void run() {
-                //Windows98.updateAllMplayers();
-                // чтобы в трее показался перечёркнутый динамик
-                Taskbar.trayVolume.bmp = mute.checked? volumeSndMuted : volumeSnd;
-                updateSystemVolume();
-            }
+        mute.onCheckChange = () -> {
+            //Windows98.updateAllMplayers();
+            // чтобы в трее показался перечёркнутый динамик
+            Taskbar.trayVolume.bmp = mute.checked? volumeSndMuted : volumeSnd;
+            updateSystemVolume();
         };
         mute.x = 9; mute.y = 117;
         elements.add(mute);

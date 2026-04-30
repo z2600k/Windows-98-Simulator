@@ -114,18 +114,11 @@ public class FileDialog extends DialogWindow {
             new FileDialog(MyDocuments.getDesktopDirectory(), FileDialog.this);
         }), 324, 28);
 
-        addElement(new ImageButton(getBmp(R.drawable.new_folder), () -> {
-            linkContainer.createFile("新建文件夹", "");
-        }), 355, 28);
+        addElement(new ImageButton(getBmp(R.drawable.new_folder), () -> linkContainer.createFile("新建文件夹", "")), 355, 28);
 
-        Explorer.LinkContainer.FileProvider fileProvider = new Explorer.LinkContainer.FileProvider() {
-            @Override
-            public boolean acceptFile(File file) {
-                return file.isDirectory() || checkExtension(file.getName());
-            }
-        };
+        Explorer.LinkContainer.FileProvider fileProvider = file -> file.isDirectory() || checkExtension(file.getName());
 
-        linkContainer = new Explorer.LinkContainer(new ArrayList<Link>(), new Rect(14, 55, 412, 342), null);
+        linkContainer = new Explorer.LinkContainer(new ArrayList<>(), new Rect(14, 55, 412, 342), null);
         addElement(linkContainer);
         ScrollBar scrollBar = new ScrollBar(linkContainer, new Rect(412, 55, 430, 342), true);
         linkContainer.scrollBar = scrollBar;
@@ -178,17 +171,14 @@ public class FileDialog extends DialogWindow {
                 new FileDialog(path, this);
             else
                 new MessageBox("另存为", MyDocuments.getFullPath(directory) + "\\" + filename + " 已经存在\n要替换吗?",
-                        MessageBox.YESNO, MessageBox.WARNING, new MessageBox.MsgResultListener() {
-                    @Override
-                    public void onMsgResult(int buttonNumber) {
-                        if (buttonNumber == YES) {
-                            FileDialog.super.close(true);  // т. к. close() в FileDialog обнуляет actionOnSave
-                            onResultListener.writeToFile(path);
-                            if (parentWindow instanceof ActionOnSave)
-                                ((ActionOnSave) parentWindow).runActionOnSave();
-                        }
-                    }
-                }, this);
+                        MessageBox.YESNO, MessageBox.WARNING, buttonNumber -> {
+                            if (buttonNumber == MessageBox.MsgResultListener.YES) {
+                                FileDialog.super.close(true);  // т. к. close() в FileDialog обнуляет actionOnSave
+                                onResultListener.writeToFile(path);
+                                if (parentWindow instanceof ActionOnSave)
+                                    ((ActionOnSave) parentWindow).runActionOnSave();
+                            }
+                        }, this);
         }
         else{
             FileDialog.super.close(true);  // т. к. close() в FileDialog обнуляет actionOnSave

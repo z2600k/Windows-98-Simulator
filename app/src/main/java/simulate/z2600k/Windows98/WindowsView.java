@@ -382,7 +382,7 @@ public class WindowsView extends View {
     public void onCursorDown(){
         if(windows98 == null)
             return;
-		if(leftDown)
+        if(leftDown)
 			return;
         try {
             windows98.onMouseOver((int) cursor_x, (int) cursor_y, true);
