@@ -7,8 +7,8 @@ android {
         applicationId "simulate.z2600k.Windows98"
         minSdkVersion 16
         targetSdkVersion 37
-        versionCode 44
-        versionName '2.1.0'
+        versionCode 46
+        versionName '2.2.0'
         // resourceConfigurations += ["en-rUS", "de-rDE", "es-rES", "fr-rFR", "pl-rPL", "pt-rPT", "ru", "tr-rTR", "zh-rCN", "zh-rHK"]
         multiDexEnabled = true
     }
@@ -32,7 +32,7 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-    buildToolsVersion '37.0.0 rc2'
+    buildToolsVersion '37.0.0'
 }
 
 dependencies {
