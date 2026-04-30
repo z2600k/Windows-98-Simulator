@@ -68,7 +68,7 @@ public class Link extends ElementContainer implements DropdownList.Item {
     };
     private boolean renameRunnableRunning = false;
     private static final List<String> knownTypes = Arrays.asList("bat", "icon", "ico", "gif", "bmp", "png", "jpg", "jpeg", "exe", "com", "ttf", "dll", "fon", "inf", "txt", "url", "ani",
-            "aac", "flac", "mp3", "ogg", "wav", "wma", "mp4", "3gp", "wmv", "webm", "avi", "mkv", "flv", "mov", "apk", "mid", "m4a");
+            "aac", "flac", "mp3", "ogg", "wav", "wma", "mp4", "3gp", "wmv", "webm", "avi", "mkv", "flv", "mov", "apk", "mid", "m4a", "m4v");
     // При ошибке переименования создаётся MessageBox, у него в super конструторе вызывается makeActive(),
     // который вызывает onOtherTouch на Explorer, а значит и на Link, Link вызывает applyRename, и возвращаемся к началу...
     private boolean isMessageBoxPresent = false;
@@ -256,17 +256,17 @@ public class Link extends ElementContainer implements DropdownList.Item {
                 text = getSimpleFilename();
             }
             switch(extension) {
-                case "bat":
+                case "bat" -> {
                     setIcon(R.drawable.bat);
                     helpText = "MS-DOS 批处理文件";
                     action = parent -> new MsDos();
-                    break;
-                case "icon": case "ico": case "gif": case "bmp": case "png": case "jpg": case "jpeg":
+                }
+                case "icon","ico","gif","bmp","png","jpg","jpeg" -> {
                     setIcon(R.drawable.paint_2);
-                    helpText = "BMP 图像";
+                    helpText = extension.toUpperCase() + " 文件";
                     action = parent -> new PaintBrush(text);
-                    break;
-                case "exe": case "com":
+                }
+                case "exe","com" -> {
                     setIcon(R.drawable.com_exe);
                     helpText = extension.equals("exe") ? "应用程序" : "MS-DOS 应用程序";
                     switch (text) {
@@ -276,7 +276,6 @@ public class Link extends ElementContainer implements DropdownList.Item {
                         case "Mplayer2" -> setIcon(R.drawable.mplayer2_110_0);
                         case "Msimn" -> setIcon(R.drawable.outlook_express_0);
                     }
-
                     if (extension.equals("exe")) {
                         action = parent -> {
                             switch (text) {
@@ -290,24 +289,24 @@ public class Link extends ElementContainer implements DropdownList.Item {
                     } else {// if (ext.equals("com")) {
                         action = parent -> new MsDos();
                     }
-                    break;
-                case "apk":
+                }
+                case "apk" -> {
                     setIcon(R.drawable.android_package);
                     helpText = "Android 应用程序包";
-                    break;
-                case "ttf":
+                }
+                case "ttf" -> {
                     setIcon(R.drawable.ttf);
                     helpText = "TrueType 字体文件";
-                    break;
-                case "dll":
+                }
+                case "dll" -> {
                     setIcon(R.drawable.file_gears_0);
                     helpText = "应用程序扩展";
-                    break;
-                case "fon":
+                }
+                case "fon" -> {
                     setIcon(R.drawable.fon);
                     helpText = "字体文件";
-                    break;
-                case "inf": case "txt":
+                }
+                case "inf","txt" -> {
                     if (extension.equals("txt")) {
                         setIcon(R.drawable.txt);
                         helpText = "文本文档";
@@ -316,44 +315,44 @@ public class Link extends ElementContainer implements DropdownList.Item {
                         helpText = "安装信息";
                     }
                     action = parent -> new Notepad(text);
-                    break;
-                case "url":
+                }
+                case "url" -> {
                     setIcon(R.drawable.url1_0);
                     helpText = "Internet 快捷方式";
                     action = parent -> new InternetExplorer();
-                    break;
-                case "ani":
+                }
+                case "ani" -> {
                     setIcon(R.drawable.other_file);
                     helpText = "动态光标";
-                    break;
-                case "wav":
+                }
+                case "wav" -> {
                     setIcon(R.drawable.sound_yel_2);
-                    helpText = "声音";
+                    helpText = "波形声音";
                     action = parent -> new MPlayer();
-                    break;
-                case "mid":
+                }
+                case "mid" -> {
                     setIcon(R.drawable.sound_mid_2);
                     helpText = "MIDI 序列";
                     action = parent -> new MPlayer();
-                    break;
-                case "aac","flac","mp3","ogg","wma","m4a":
+                }
+                case "aac","flac","mp3","ogg","wma","m4a" -> {
                     setIcon(R.drawable.video_tl_1);
                     helpText = extension.toUpperCase() + " 文件";
                     action = parent -> new MPlayer();
-                    break;
-                case "mp4","3gp","wmv","webm","avi","mkv","flv","mov":
+                }
+                case "mp4","3gp","wmv","webm","avi","mkv","flv","mov","m4v" -> {
                     setIcon(R.drawable.video_1);
                     helpText = "视频文件";
                     action = parent -> new MPlayer();
-                    break;
-                default:
+                }
+                default -> {
                     setIcon(R.drawable.other_file);
                     text = fullFilename;
                     if (!extension.isEmpty())
                         helpText = extension.toUpperCase() + " 文件";
                     else
                         helpText = "未知文件";
-                    break;
+                }
             }
         }
         lines = splitTextIntoLines(text, widthLimit, 2, p);
@@ -403,7 +402,7 @@ public class Link extends ElementContainer implements DropdownList.Item {
         if(active && activeIcon == null)  // ленивая инициализация
             createActiveIcon();
         boolean isHidden = false;
-        if (path != null) {
+        if (path != null && fullFilename != null) {
             isHidden = path.isHidden() || fullFilename.startsWith(".");
         }
         Paint paint = isHidden ? hiddenPaint : null;
@@ -546,7 +545,7 @@ public class Link extends ElementContainer implements DropdownList.Item {
     @Override
     public boolean onMouseOver(int x, int y, boolean touch) {
         if(isRenaming()){
-             // т. к. x, y, width, height у renameTextBox неправильные
+            // т. к. x, y, width, height у renameTextBox неправильные
             renameTextBox.visible = renameTextBoxBounds.contains(x, y);
             boolean returnValue = super.onMouseOver(x, y, touch);
             renameTextBox.visible = true;
