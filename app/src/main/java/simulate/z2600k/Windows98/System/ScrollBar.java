@@ -47,8 +47,15 @@ public class ScrollBar extends Element {
     public ScrollBar(Scrollable scrollable, Rect bounds, boolean isVertical){
         this.scrollable = scrollable;
         this.isVertical = isVertical;
+        // 修复：强制非滚动方向尺寸为 18 像素
+        if (isVertical) {
+            bounds.right = bounds.left + 18;
+        } else {
+            bounds.bottom = bounds.top + 18;
+        }
         this.minimizedBounds = bounds;
         setBounds(bounds);
+
         ditherPainter = new DitherPainter(Color.WHITE, Color.parseColor("#DFDFDF"));
         ditherPainterActive = new DitherPainter(Color.BLACK, Color.parseColor("#000000"));
 
@@ -69,7 +76,12 @@ public class ScrollBar extends Element {
 
     public ScrollBar(Scrollable scrollable, Rect minimizedBounds, Rect maximizedBounds, boolean isVertical){
         this(scrollable, minimizedBounds, isVertical);
-        this.minimizedBounds = minimizedBounds;
+        // 修复：同样强制最大化尺寸
+        if (isVertical) {
+            maximizedBounds.right = maximizedBounds.left + 18;
+        } else {
+            maximizedBounds.bottom = maximizedBounds.top + 18;
+        }
         this.maximizedBounds = maximizedBounds;
     }
 
@@ -249,6 +261,7 @@ public class ScrollBar extends Element {
         action.run();
         WindowsView.handler.postDelayed(actionRunnable, 500);
     }
+
     private void stopAction(){
         WindowsView.handler.removeCallbacks(actionRunnable);
     }
