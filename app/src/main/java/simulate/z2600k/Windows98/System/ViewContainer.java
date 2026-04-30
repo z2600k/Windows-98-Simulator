@@ -21,8 +21,11 @@ public class ViewContainer extends Element {
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(1, 1);
         params.leftMargin = 0;
         params.topMargin = 0;
-        MainActivity.windowsViewGroup.addView(this.view, params);
-        WindowsView.windowsView.bringToFront();
+        // 防止静态变量在Activity销毁后被调用
+        if (MainActivity.windowsViewGroup != null) {
+            MainActivity.windowsViewGroup.addView(this.view, params);
+            WindowsView.windowsView.bringToFront();
+        }
         updateLayoutIfNeeded();
     }
 
@@ -88,13 +91,19 @@ public class ViewContainer extends Element {
     }
 
     private static void updateLayout(){
-        MainActivity.windowsViewGroup.requestLayout();
-        MainActivity.windowsViewGroup.invalidate();
+        // 防止静态变量在Activity销毁后被调用
+        if (MainActivity.windowsViewGroup != null) {
+            MainActivity.windowsViewGroup.requestLayout();
+            MainActivity.windowsViewGroup.invalidate();
+        }
     }
 
     @Override
     public void prepareForDelete() {
-        MainActivity.windowsViewGroup.removeView(view);
+        // 防止静态变量在Activity销毁后被调用
+        if (MainActivity.windowsViewGroup != null) {
+            MainActivity.windowsViewGroup.removeView(view);
+        }
     }
 
     public View getView() {

@@ -28,11 +28,8 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.RelativeLayout;
 
-import com.google.android.material.snackbar.Snackbar;
-
 import simulate.z2600k.Windows98.MainActivity;
 import simulate.z2600k.Windows98.MyWebView;
-import simulate.z2600k.Windows98.R;
 import simulate.z2600k.Windows98.System.ScrollBar;
 import simulate.z2600k.Windows98.System.Scrollable;
 import simulate.z2600k.Windows98.System.ViewContainer;
@@ -100,47 +97,39 @@ public class WebViewContainer extends ViewContainer implements Scrollable {
         webChromeClient = new MyWebChromeClient();
         webView.setWebChromeClient(webChromeClient);
 
-        downloadListener = new DownloadListener() {
-            @Override
-            public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
-                if(!MyDocuments.externalStorageAvailable())
+        downloadListener = (url, userAgent, contentDisposition, mimetype, contentLength) -> {
+            if(!MyDocuments.externalStorageAvailable())
+                return;
+            Uri uri = Uri.parse(url);
+            String scheme = uri.getScheme();
+            if (scheme == null || (!scheme.equals("http") && !scheme.equals("https")))  // DownloadManager не понимает другого
+                return;
+            // если одна и та же загрузка загружается 2 раза - это плохо
+            Iterator<WeakReference<InternetExplorer.FileDownloadWindow>> iterator = downloads.iterator();
+            while(iterator.hasNext()){
+                WeakReference<InternetExplorer.FileDownloadWindow> ref = iterator.next();
+                if(ref.get() == null || ref.get().closed)
+                    iterator.remove();
+                else if(ref.get().childMessagebox != null){
                     return;
-                Uri uri = Uri.parse(url);
-                String scheme = uri.getScheme();
-                if (scheme == null || (!scheme.equals("http") && !scheme.equals("https")))  // DownloadManager не понимает другого
-                    return;
-                // если одна и та же загрузка загружается 2 раза - это плохо
-                Iterator<WeakReference<InternetExplorer.FileDownloadWindow>> iterator = downloads.iterator();
-                while(iterator.hasNext()){
-                    WeakReference<InternetExplorer.FileDownloadWindow> ref = iterator.next();
-                    if(ref.get() == null || ref.get().closed)
-                        iterator.remove();
-                    else if(ref.get().childMessagebox != null){
-                        return;
-                    }
                 }
-                InternetExplorer.FileDownloadWindow fileDownloadWindow =
-                        new InternetExplorer.FileDownloadWindow(url, userAgent, contentDisposition, mimetype);
-                downloads.add(new WeakReference<>(fileDownloadWindow));
-
-                // если это прямая ссылка на файл, то надо вернуться на последнюю страницу без редиректов
-                if(lastNoRedirectUrl != null && !lastNoRedirectUrl.equals(lastLoadedUrl)){
-                    webView.loadUrl(lastNoRedirectUrl);
-                    //Log.d(TAG, "going back to lastNoRedirectUrl: " + lastNoRedirectUrl);
-                }
-
-                //if(webView.canGoBack())
-                //    webView.goBack();
             }
+            InternetExplorer.FileDownloadWindow fileDownloadWindow =
+                    new InternetExplorer.FileDownloadWindow(url, userAgent, contentDisposition, mimetype);
+            downloads.add(new WeakReference<>(fileDownloadWindow));
+
+            // если это прямая ссылка на файл, то надо вернуться на последнюю страницу без редиректов
+            if(lastNoRedirectUrl != null && !lastNoRedirectUrl.equals(lastLoadedUrl)){
+                webView.loadUrl(lastNoRedirectUrl);
+                //Log.d(TAG, "going back to lastNoRedirectUrl: " + lastNoRedirectUrl);
+            }
+
+            //if(webView.canGoBack())
+            //    webView.goBack();
         };
         webView.setDownloadListener(downloadListener);
 
-        webView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
-            @Override
-            public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                updateScrollbarPosition();
-            }
-        });
+        webView.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> updateScrollbarPosition());
 
         // https://eurobeat-prime.com/lyrics.php?lyrics=1546
         // http://www.google.com
@@ -204,13 +193,10 @@ public class WebViewContainer extends ViewContainer implements Scrollable {
     private void postEvent(final MotionEvent event, int delay){
         if(wakeLock.get())
             delay = 0;
-        webView.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if(webView != null && customView == null)
-                    webView.dispatchTouchEvent(event);
-                event.recycle();
-            }
+        webView.postDelayed(() -> {
+            if(webView != null && customView == null)
+                webView.dispatchTouchEvent(event);
+            event.recycle();
         }, delay);
     }
 
@@ -218,7 +204,7 @@ public class WebViewContainer extends ViewContainer implements Scrollable {
     public class MyWebViewClient extends WebViewClient {
         private boolean isRedirected = false;  // Для определения страницы без редиректов. (c) https://stackoverflow.com/a/25547544/
 
-        @TargetApi(24)
+        @androidx.annotation.RequiresApi(24)
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
             shouldOverrideUrlLoading(view, request.getUrl().toString());
@@ -242,6 +228,7 @@ public class WebViewContainer extends ViewContainer implements Scrollable {
                             context.startActivity(intent);
                         else {
                             String fallbackUrl = intent.getStringExtra("browser_fallback_url");
+                            assert fallbackUrl != null;
                             view.loadUrl(fallbackUrl);
                         }
                         return true;
@@ -276,7 +263,7 @@ public class WebViewContainer extends ViewContainer implements Scrollable {
                 if(isRedirected) {
                     final String returnUrl = lastNoRedirectUrl;
                     // проверяем, если это прямая ссылка на видео. Тогда предлагаем его скачать
-                    AsyncTask<Void, Integer, String> checkForVideo = new AsyncTask<Void, Integer, String>() {
+                    AsyncTask<Void, Integer, String> checkForVideo = new AsyncTask<>() {
                         @Override
                         protected String doInBackground(Void... voids) {
                             String contentType;
@@ -313,7 +300,7 @@ public class WebViewContainer extends ViewContainer implements Scrollable {
         void onReceivedError(){
             webView.loadUrl("file:///android_asset/DNSERROR.HTM");
         }
-        @TargetApi(23)
+        @androidx.annotation.RequiresApi(23)
         @Override
         public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
             if(request.isForMainFrame())  // OMG, finally found this!
@@ -491,7 +478,9 @@ public class WebViewContainer extends ViewContainer implements Scrollable {
 
         public void onHideCustomView() {
             //Log.d(TAG, "hide custom view");
-            MainActivity.windowsViewGroup.removeView(customView);
+            if (MainActivity.windowsViewGroup != null) {
+                MainActivity.windowsViewGroup.removeView(customView);
+            }
             customView = null;
             customViewCallback.onCustomViewHidden();
             customViewCallback = null;
@@ -518,7 +507,9 @@ public class WebViewContainer extends ViewContainer implements Scrollable {
             //if(customView instanceof FrameLayout){
             //    ((FrameLayout) customView).getFocusedChild().setLayoutParams(new FrameLayout.LayoutParams(screenWidth, screenHeight));
            // }
-            MainActivity.windowsViewGroup.addView(customView, params);
+            if (MainActivity.windowsViewGroup != null) {
+                MainActivity.windowsViewGroup.addView(customView, params);
+            }
         }
     }
 }

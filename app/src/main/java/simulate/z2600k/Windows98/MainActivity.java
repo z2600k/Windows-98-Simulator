@@ -34,10 +34,10 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+// import android.app.Activity;
 import androidx.activity.OnBackPressedCallback;
 
 import com.google.android.material.color.DynamicColors;
-
 import simulate.z2600k.Windows98.Applications.InternetExplorer;
 import simulate.z2600k.Windows98.Applications.MPlayer;
 import simulate.z2600k.Windows98.Applications.MyDocuments;
@@ -47,6 +47,7 @@ import simulate.z2600k.Windows98.System.Taskbar;
 import simulate.z2600k.Windows98.System.ViewContainer;
 import simulate.z2600k.Windows98.System.Windows98;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 
 public class MainActivity extends AppCompatActivity {
@@ -66,6 +67,22 @@ public class MainActivity extends AppCompatActivity {
             finish();// Do your stuff here
         }
     };
+    private final Handler mHideHandler = new MyHideHandler(this);
+    private static class MyHideHandler extends Handler {
+        private final WeakReference<MainActivity> mActivityRef;
+
+        MyHideHandler(MainActivity activity) {
+            mActivityRef = new WeakReference<>(activity);
+        }
+
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            MainActivity activity = mActivityRef.get();
+            if (activity != null && !activity.isFinishing()) {
+                activity.hideSystemUI();
+            }
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -190,14 +207,20 @@ public class MainActivity extends AppCompatActivity {
         edit.putBoolean("showOnStartup", checkBox.isChecked());
         edit.apply();
         hideTutorial();
-        windowsViewGroup.setVisibility(View.VISIBLE);
+        // 防止静态变量在Activity销毁后被调用
+        if (windowsViewGroup != null) {
+            windowsViewGroup.setVisibility(View.VISIBLE);
+        }
         WindowsView.windowsView.requestFocus();
         Windows98.windows98.startup();
     }
 
     private void hideTutorial(){
         //Log.d(TAG, "tutorial hidden");
-        contentRoot.removeView(tutorial);
+        // 防止 contentRoot 为空导致崩溃
+        if (contentRoot != null) {
+            contentRoot.removeView(tutorial);
+        }
     }
 
     public void onCheckboxClick(View view){
@@ -310,11 +333,18 @@ public class MainActivity extends AppCompatActivity {
             try {
                 Method mGetRawH = Display.class.getMethod("getRawHeight");
                 Method mGetRawW = Display.class.getMethod("getRawWidth");
-                point.x = (Integer) mGetRawW.invoke(display);
-                point.y = (Integer) mGetRawH.invoke(display);
-            }
-            catch (Exception e) {
-                //this may not be 100% accurate, but it's all we've got
+                Integer width = (Integer) mGetRawW.invoke(display);
+                Integer height = (Integer) mGetRawH.invoke(display);
+                if (width != null && height != null) {
+                    point.x = width;
+                    point.y = height;
+                } else {
+                    // 回退到近似尺寸
+                    point.x = display.getWidth();
+                    point.y = display.getHeight();
+                }
+            } catch (Exception e) {
+                // 异常时同样使用近似值
                 point.x = display.getWidth();
                 point.y = display.getHeight();
             }
@@ -356,17 +386,19 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private final Handler mHideHandler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            hideSystemUI();
-        }
-    };
-
     public void delayedHide(int delayMillis) {
         if(Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.R)
             return;
         mHideHandler.removeMessages(0);
         mHideHandler.sendEmptyMessageDelayed(0, delayMillis);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // 解除静态引用，防止内存泄漏
+        windowsViewGroup = null;
+        contentRoot = null;
+        mHideHandler.removeCallbacksAndMessages(null);
     }
 }
