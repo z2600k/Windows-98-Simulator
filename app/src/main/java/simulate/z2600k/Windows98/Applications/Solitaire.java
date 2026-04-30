@@ -65,6 +65,7 @@ public class Solitaire extends BaseSolitaire {
     Card curCard = null;  // карта, которая сейчас находится в движении
     float cur_x, cur_y, cur_vx, cur_vy;
     float g = 0.3f;  // ускорение свободного падения для карт
+    ButtonInList undo;
 
     Runnable winRunnable = new Runnable() {
         @Override
@@ -112,6 +113,135 @@ public class Solitaire extends BaseSolitaire {
         return min + ((float) Math.random()) * (max - min);
     }
 
+    // 撤销用的状态对象
+    private static class SolitaireGameState extends GameState {
+        int score, time, state, curStack, timesGoThrough, drawAmount;
+        int cardX;
+        // 12 个 pile 的卡牌数据：每个 pile 是一个 List<Integer>，偶数位置为卡牌编码，奇数位置为是否背面(1/0)
+        ArrayList<ArrayList<Integer>> stackCards = new ArrayList<>();
+        ArrayList<Integer> deckCards = new ArrayList<>(); // Deck 的未翻牌堆
+        ArrayList<Integer> expandedCards = new ArrayList<>();
+        ArrayList<Integer> expandedCardsX = new ArrayList<>();
+        ArrayList<Integer> expandedCardsY = new ArrayList<>();
+    }
+    @Override
+    protected GameState captureGameState() {
+        SolitaireGameState s = new SolitaireGameState();
+        s.score = score;
+        s.time = time;
+        s.state = this.state;
+        s.curStack = curStack;
+        s.drawAmount = drawAmount;
+
+        for (int i = 0; i < 12; i++) {
+            CardStack stack = (CardStack) elements.get(i);
+            ArrayList<Integer> cards = new ArrayList<>();
+            for (Element el : stack.elements) {
+                Card c = (Card) el;
+                cards.add(c.suit * 13 + c.number);  // 牌的唯一编码
+                cards.add(c.closed ? 1 : 0);
+            }
+            if (stack == returnCardsTo && !movingCards.isEmpty()) {
+                for (Card c : movingCards) {
+                    cards.add(c.suit * 13 + c.number);
+                    cards.add(c.closed ? 1 : 0);
+                }
+            }
+            s.stackCards.add(cards);
+        }
+
+// 保存 Deck 状态
+        Deck deck = (Deck) elements.get(7);
+        s.deckCards = new ArrayList<>();
+        // 先保存未翻开的牌堆
+        for (Card c : deck.deckCards) {
+            s.deckCards.add(c.suit * 13 + c.number);
+        }
+        // 再保存已展开的牌（当前显示在 Deck 旁边的牌）
+        s.expandedCards = new ArrayList<>();
+        s.expandedCardsX = new ArrayList<>();
+        s.expandedCardsY = new ArrayList<>();
+        for (Element el : deck.elements) {
+            Card c = (Card) el;
+            s.expandedCards.add(c.suit * 13 + c.number);
+            s.expandedCardsX.add(c.x);
+            s.expandedCardsY.add(c.y);
+        }
+        if (returnCardsTo == deck && !movingCards.isEmpty()) {
+            for (Card c : movingCards) {
+                s.expandedCards.add(c.suit * 13 + c.number);
+                s.expandedCardsX.add(c.x);
+                s.expandedCardsY.add(c.y);
+            }
+        }
+        s.timesGoThrough = deck.timesGoThrough;
+        s.cardX = deck.cardX;
+        return s;
+    }
+    @Override
+    protected void restoreGameState(GameState state) {
+        SolitaireGameState s = (SolitaireGameState) state;
+        score = s.score;
+        time = s.time;
+        this.state = s.state;
+        curStack = s.curStack;
+        drawAmount = s.drawAmount;
+
+        // 清空所有牌堆
+        for (int i = 0; i < 12; i++) {
+            ((CardStack) elements.get(i)).elements.clear();
+        }
+
+        // 恢复牌堆
+        for (int i = 0; i < 12; i++) {
+            CardStack stack = (CardStack) elements.get(i);
+            ArrayList<Integer> cards = s.stackCards.get(i);
+            for (int j = 0; j < cards.size(); j += 2) {
+                int id = cards.get(j);
+                boolean closed = cards.get(j + 1) == 1;
+                Card card = new Card(id % 13, id / 13, cardBitmaps);
+                card.closed = closed;
+                stack.elements.add(card);
+            }
+        }
+
+        // 恢复 Deck
+        Deck deck = (Deck) elements.get(7);
+        deck.deckCards.clear();
+        for (int id : s.deckCards) {
+            deck.deckCards.add(new Card(id % 13, id / 13, cardBitmaps));
+        }
+        // 恢复已展开的牌
+        deck.elements.clear();
+        for (int i = 0; i < s.expandedCards.size(); i++) {
+            int id = s.expandedCards.get(i);
+            Card card = new Card(id % 13, id / 13, cardBitmaps);
+            card.closed = false;
+            card.x = s.expandedCardsX.get(i);
+            card.y = s.expandedCardsY.get(i);
+            deck.elements.add(card);
+        }
+        deck.timesGoThrough = s.timesGoThrough;
+        deck.cardX = s.cardX;
+        // 处理计时器重启（如果原来正在计时）
+        if (scheduledFuture != null) {
+            scheduledFuture.cancel(false);
+            scheduledFuture = null;
+        }
+        if (this.state == PLAYING && timedGame) {
+            scheduledFuture = scheduler.scheduleWithFixedDelay(timerRunnable, 1, 1, TimeUnit.SECONDS);
+        }
+    }
+    @Override
+    protected void undo() {
+        super.undo();
+        undo.disabled = undoStack.isEmpty();
+        updateWindow(); // 强制重绘
+    }
+    @Override
+    protected void updateUndoButtonState() {
+        undo.disabled = undoStack.isEmpty();
+    }
     public Solitaire() {
         super("纸牌", StartMenu.solitaire, 597, 434, true, true, false);
         drawElements = false;  // см. Window. Мы сами рисуем элементы, так как хотим рисовать зелёное поле ПОД картами, то есть заранее
@@ -132,8 +262,8 @@ public class Solitaire extends BaseSolitaire {
         ButtonInList deal = new ButtonInList("发牌", parent -> reset());
         game.elements.add(deal);
         game.elements.add(new Separator());
-        ButtonInList undo = new ButtonInList("撤销");
-        undo.disabled = true;
+        undo = new ButtonInList("撤销", "Ctrl+Z", parent -> undo());
+        undo.disabled = true;   // 初始无撤销状态
         game.elements.add(undo);
         game.elements.add(new ButtonInList("背面图案..."));
         game.elements.add(new ButtonInList("选项...", parent -> new OptionsWindow()));
@@ -277,10 +407,35 @@ public class Solitaire extends BaseSolitaire {
                 canvas.drawBitmap(winBmp, tmp.left, tmp.top, null);
             else
                 canvas.drawBitmap(winBmp, src, tmp, null);
-            String text = "单击或按下 Esc 结束游戏...";
-            if(timedGame)
-                text = "加分: " + bonus + "  " + text;
-            canvas.drawText(text, x + 11, y + height - 9, p_system);
+
+            // 底部文本
+            numPaint.setColor(Color.BLACK);
+            textPaint.setColor(Color.BLACK);
+
+            float leftX = x + 11;            // 左边缘起始坐标
+            float leftY = y + height - 9;
+            float gap = 5;
+
+            if(timedGame) {
+                String bonusText = "加分: ";
+                String bonusNum = String.valueOf(bonus);
+                float bonusTextW = textPaint.measureText(bonusText);
+                float bonusNumW = numPaint.measureText(bonusNum);
+                // 绘制“加分: ”
+                canvas.drawText(bonusText, leftX, leftY, textPaint);
+                leftX += bonusTextW;
+                // 绘制数字
+                canvas.drawText(bonusNum, leftX, leftY, numPaint);
+                leftX += bonusNumW + gap;     // 加上间隔
+            }
+            
+            String part1 = "单击或按下 ", part2 = "Esc", part3 = " 结束游戏...";
+            float part1W = textPaint.measureText(part1), part2W = numPaint.measureText(part2);
+            canvas.drawText(part1, leftX, leftY, textPaint);
+            leftX += part1W;
+            canvas.drawText(part2, leftX, leftY, numPaint);
+            leftX += part2W;
+            canvas.drawText(part3, leftX, leftY, textPaint);
             topButtons.onDraw(canvas, x + topButtons.x, y + topButtons.y);
             return;
         }
@@ -410,6 +565,9 @@ public class Solitaire extends BaseSolitaire {
         curCard = null;
         setupCards();
         state = WAIT_FOR_CLICK;
+        undoStack.clear();
+        updateUndoButtonState(); // 栈空 → 按钮禁用
+        undo.disabled = true;
     }
 
     @Override
@@ -522,8 +680,10 @@ public class Solitaire extends BaseSolitaire {
             if(!touch)
                 return true;
             if(deckCards.isEmpty()){  // карты кончились - собираем обратно
-                if(elements.size() <= drawAmount)  // но если их 3 или меньше - не собираем
+                if(elements.size() <= drawAmount) {  // но если их 3 или меньше - не собираем
                     return true;
+                }
+                pushUndoState();  // 回收牌前保存
                 for(int i=elements.size()-1; i>=0; i--){  // в обратном порядке, так как мы брали карты сверху
                     deckCards.add((Card) elements.get(i));
                 }
@@ -537,8 +697,10 @@ public class Solitaire extends BaseSolitaire {
                     }
                 }
             }
-            else
+            else {
+                pushUndoState();      // 发牌前保存
                 drawThree();
+            }
             return true;
         }
 

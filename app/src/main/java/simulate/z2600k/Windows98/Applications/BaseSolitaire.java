@@ -9,6 +9,7 @@ import simulate.z2600k.Windows98.System.Element;
 import simulate.z2600k.Windows98.System.Window;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public abstract class BaseSolitaire extends Window {
@@ -18,6 +19,36 @@ public abstract class BaseSolitaire extends Window {
     int movingCardsDy;
     CardStack returnCardsTo;  // откуда взяли карты
     static final int cardWidth = 71, cardHeight = 96;
+    protected static final int MAX_UNDO = 100;
+    protected LinkedList<GameState> undoStack = new LinkedList<>();
+    protected static class GameState {} // 空的基类，子类必须继承并添加自己的状态字段
+    protected abstract GameState captureGameState();    // 保存当前游戏完整状态
+    protected abstract void restoreGameState(GameState state);  // 将游戏恢复到指定状态
+
+    // 在操作前保存状态（栈满则移除最旧）
+    protected void pushUndoState() {
+        if (undoStack.size() >= MAX_UNDO) {
+            undoStack.removeFirst();
+        }
+        undoStack.addLast(captureGameState());
+        updateUndoButtonState();
+    }
+    // 执行撤销
+    protected void undo() {
+        if (undoStack.isEmpty()) return;
+        GameState state = undoStack.removeLast();
+        restoreGameState(state);
+        // 如果有牌正在被拖拽，强行放回原栈
+        if (!movingCards.isEmpty()) {
+            returnCardsTo.elements.addAll(movingCards);
+            movingCards.clear();
+        }
+        updateUndoButtonState();
+        updateWindow();
+    }
+    // 默认空实现，子类重写此方法，根据 undoStack.isEmpty() 来启用/禁用撤销按钮
+    protected void updateUndoButtonState() {}
+
 
     final static int[] cardBitmapsIds = {R.drawable.c1, R.drawable.c2, R.drawable.c3, R.drawable.c4, R.drawable.c5, R.drawable.c6, R.drawable.c7, R.drawable.c8, R.drawable.c9, R.drawable.c10,
             R.drawable.c11, R.drawable.c12, R.drawable.c13, R.drawable.c14, R.drawable.c15, R.drawable.c16, R.drawable.c17, R.drawable.c18, R.drawable.c19, R.drawable.c20,
@@ -55,8 +86,10 @@ public abstract class BaseSolitaire extends Window {
         }
     }
 
-    void onSolitaireClick(int x, int y, boolean callSuperOnClick) {  // не onSelfClick, потому что CardStack может забрать себе onMouseOver (и клика не будет)
+    void onSolitaireClick(int x, int y, boolean callSuperOnClick) {
         if(!movingCards.isEmpty()){
+            //  先清空拖拽状态，牌回到原栈
+            CardStack fromStack = returnCardsTo;
             int card_x = x + cardShiftX, card_y = y + cardShiftY;
             int card_cx = card_x + 36, card_cy = card_y + 48;  // центр движущейся карты (или нескольких карт)
             int min_dist = (int) 1e9;
@@ -76,10 +109,15 @@ public abstract class BaseSolitaire extends Window {
                     }
                 }
             }
-            if(bestCardStack == null)
-                returnCardsTo.elements.addAll(movingCards);
-            else
+
+            // 只在确定要移动时保存状态
+            if(bestCardStack != null){
+                pushUndoState();  // 移动前保存
                 bestCardStack.elements.addAll(movingCards);
+            } else {
+                // 没有合法目标，退回原栈
+                returnCardsTo.elements.addAll(movingCards);
+            }
             movingCards.get(0).onCardClick();
             movingCards.clear();
 

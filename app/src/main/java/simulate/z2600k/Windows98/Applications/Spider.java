@@ -47,6 +47,82 @@ public class Spider extends BaseSolitaire {
     private int[] tmp = new int[71 * 96];
     private Random random = new Random();
     private int currentSeed;  // seed для текущей игры
+    ButtonInList undo;
+    private static class SpiderGameState extends GameState {
+        int score, moves, currentSeed, difficulty;
+        boolean win;
+        ArrayList<ArrayList<Integer>> stackCards = new ArrayList<>(); // 12 个栈，每个元素是 cardId 与 closed 交替
+    }
+    @Override
+    protected GameState captureGameState() {
+        SpiderGameState s = new SpiderGameState();
+        s.score = score;
+        s.moves = moves;
+        s.win = win;
+        s.currentSeed = currentSeed;
+        s.difficulty = difficulty;
+
+        for (int i = 0; i < 12; i++) {
+            CardStack stack = (CardStack) elements.get(i);
+            ArrayList<Integer> cards = new ArrayList<>();
+            for (Element el : stack.elements) {
+                Card c = (Card) el;
+                cards.add(c.suit * 13 + c.number);
+                cards.add(c.closed ? 1 : 0);
+            }
+            if (stack == returnCardsTo && !movingCards.isEmpty()) {
+                for (Card c : movingCards) {
+                    cards.add(c.suit * 13 + c.number);
+                    cards.add(c.closed ? 1 : 0);
+                }
+            }
+            s.stackCards.add(cards);
+        }
+        return s;
+    }
+    @Override
+    protected void restoreGameState(GameState state) {
+        SpiderGameState s = (SpiderGameState) state;
+        score = s.score;
+        moves = s.moves;
+        win = s.win;
+        currentSeed = s.currentSeed;
+        difficulty = s.difficulty;
+
+        for (int i = 0; i < 12; i++) {
+            ((CardStack) elements.get(i)).elements.clear();
+        }
+        for (int i = 0; i < 12; i++) {
+            CardStack stack = (CardStack) elements.get(i);
+            ArrayList<Integer> cards = s.stackCards.get(i);
+            for (int j = 0; j < cards.size(); j += 2) {
+                int id = cards.get(j);
+                boolean closed = cards.get(j + 1) == 1;
+                Card card = new Card(id, cardBitmaps, tmp); // 注意构造参数
+                card.closed = closed;
+                stack.elements.add(card);
+            }
+        }
+        // 恢复 RowStack 的纵向偏移
+        for (int i = 0; i < 10; i++) {
+            ((RowStack) elements.get(i)).updateCardDy();
+        }
+        // 更新发牌按钮状态
+        Stock stock = (Stock) elements.get(10);
+        dealButton.disabled = dealNextRow.disabled = stock.elements.isEmpty();
+        // 提示失效
+        hints = null;
+    }
+    @Override
+    protected void undo() {
+        super.undo();
+        undo.disabled = undoStack.isEmpty();
+        updateWindow();
+    }
+    @Override
+    protected void updateUndoButtonState() {
+        undo.disabled = undoStack.isEmpty();
+    }
 
     public Spider(){
         super("蜘蛛", getBmp(R.drawable.spider_icon_small), Windows98.SCREEN_WIDTH, Windows98.TASKBAR_Y, true, true, false);
@@ -100,8 +176,8 @@ public class Spider extends BaseSolitaire {
                         newGame(currentSeed);
                 }, Spider.this)));
         game.elements.add(new Separator());
-        ButtonInList undo = new ButtonInList("撤销", "Ctrl+Z");
-        undo.disabled = true;
+        undo = new ButtonInList("撤销", "Ctrl+Z", parent -> undo());
+        undo.disabled = true;   // 开局禁用
         game.elements.add(undo);
         dealNextRow = new ButtonInList("新一轮发牌", "D", parent -> dealStock());
         game.elements.add(dealNextRow);
@@ -201,7 +277,6 @@ public class Spider extends BaseSolitaire {
         if(!src.elements.isEmpty())
             src.top().closed = false;
         if(dst.elements.size() >= 13) {
-            // если выстроить последовательность от туза до короля одной масти, она уходит в Foundation
             boolean fullStack = true;
             for(int i = 0; i < 13; i++){
                 Card card = dst.cardFromTop(i);
@@ -211,6 +286,8 @@ public class Spider extends BaseSolitaire {
                 }
             }
             if(fullStack){
+                // 移入 Foundation 是自动触发的，需要在移动前单独保存
+                pushUndoState();
                 score += 100;
                 Foundation foundation = (Foundation) elements.get(11);
                 for(int i = 0; i < 13; i++)
@@ -218,7 +295,6 @@ public class Spider extends BaseSolitaire {
                 if(!dst.elements.isEmpty())
                     dst.top().closed = false;
                 dealStockSound.start();
-                // проверяем выигрыш
                 if(foundation.elements.size() == 52 * 2){
                     win = true;
                     if(winBmp == null)
@@ -245,7 +321,7 @@ public class Spider extends BaseSolitaire {
                 return;
             }
         }
-
+        pushUndoState();
         dealStockSound.start();
         for(int i = 0; i < 10; i++){
             Card card = stock.pop();
@@ -262,6 +338,9 @@ public class Spider extends BaseSolitaire {
     private void newGame(){
         currentSeed = random.nextInt();
         newGame(currentSeed);
+        undoStack.clear();
+        updateUndoButtonState();
+        undo.disabled = true;
     }
 
     private void newGame(long seed){  // разложить карты для новой игры
@@ -313,6 +392,9 @@ public class Spider extends BaseSolitaire {
             rowStack.top().closed = false;
             rowStack.updateCardDy();
         }
+        undoStack.clear();
+        updateUndoButtonState();
+        undo.disabled = true;
     }
 
     private boolean gameStarted(){

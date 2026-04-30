@@ -6,7 +6,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.widget.Toast;
 
 import com.google.android.material.snackbar.Snackbar;
 import simulate.z2600k.Windows98.R;
@@ -27,8 +26,11 @@ import simulate.z2600k.Windows98.System.TopMenu;
 import simulate.z2600k.Windows98.System.TopMenuButton;
 import simulate.z2600k.Windows98.System.Window;
 import simulate.z2600k.Windows98.System.Windows98;
+import simulate.z2600k.Windows98.WindowsView;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
@@ -56,6 +58,72 @@ public class FreeCell extends Window {
     private int state = EMPTY;
     private String cardsLeftString = null;
     private Rect src = new Rect(), dst = new Rect(), field = new Rect();
+    private ButtonInList undo;
+    private static final int MAX_UNDO = 100;
+    private LinkedList<FreeCellGameState> undoStack = new LinkedList<>();
+    private static class FreeCellGameState {
+        int gameNumber;
+        int state;
+        boolean headIsLeft;
+        ArrayList<ArrayList<Integer>> stackCards = new ArrayList<>(); // 16 个栈
+    }
+
+    private FreeCellGameState captureState() {
+        FreeCellGameState s = new FreeCellGameState();
+        s.gameNumber = gameNumber;
+        s.state = this.state;
+        s.headIsLeft = headIsLeft;
+        for (int i = 0; i < 16; i++) {
+            CardStack stack = (CardStack) elements.get(i);
+            ArrayList<Integer> cards = new ArrayList<>();
+            for (Element el : stack.elements) {
+                Card c = (Card) el;
+                cards.add(c.number * 4 + c.suit); // 使用卡牌唯一标识
+            }
+            s.stackCards.add(cards);
+        }
+        return s;
+    }
+
+    private void restoreState(FreeCellGameState s) {
+        this.gameNumber = s.gameNumber;
+        this.state = s.state;
+        this.headIsLeft = s.headIsLeft;
+        setTitle("空当接龙游戏 #" + s.gameNumber);
+
+        for (int i = 0; i < 16; i++) {
+            ((CardStack) elements.get(i)).elements.clear();
+        }
+        for (int i = 0; i < 16; i++) {
+            CardStack stack = (CardStack) elements.get(i);
+            ArrayList<Integer> cards = s.stackCards.get(i);
+            for (int id : cards) {
+                // allCards 由构造函数生成，按 id 索引
+                stack.elements.add(allCards[id]);
+            }
+        }
+        selectedStack = null;
+        updateState(); // 刷新剩余牌数和胜负状态
+    }
+
+    private void pushUndoState() {
+        if (undoStack.size() >= MAX_UNDO) {
+            undoStack.remove(0);
+        }
+        undoStack.add(captureState());
+        undo.disabled = false;   // 一有状态，按钮就启用
+    }
+
+    private void undo() {
+        if (undoStack.isEmpty()) return;
+        FreeCellGameState state = undoStack.remove(undoStack.size() - 1);
+        restoreState(state);
+        // 强制整个窗口重绘
+        shouldRedraw = true;
+        if (WindowsView.windowsView != null)
+            WindowsView.windowsView.invalidate();
+        undo.disabled = undoStack.isEmpty();  // 如果回到开局，禁用按钮
+    }
 
     public FreeCell(){
         super("空当接龙", getBmp(R.drawable.freecell), 640, 452, true, false, false);
@@ -96,8 +164,10 @@ public class FreeCell extends Window {
         game.elements.add(new ButtonInList("战况...", "F4"));
         game.elements.add(new ButtonInList("选项...", "F5"));
         game.elements.add(new Separator());
-        ButtonInList undo = new ButtonInList("撤销", "F10");
+        undo = new ButtonInList("撤销", "F10", parent -> undo());
         undo.disabled = true;
+        game.elements.add(undo);
+        game.elements.add(new Separator());
         game.elements.add(new ButtonInList("退出", parent -> close()));
 
         ButtonList help = new ButtonList();
@@ -148,6 +218,8 @@ public class FreeCell extends Window {
 
         state = PLAYING;
         updateState();
+        undoStack.clear();
+        undo.disabled = true;
     }
 
     private int randomGameNumber(){
@@ -290,22 +362,14 @@ public class FreeCell extends Window {
 
     @Override
     public void close(final boolean activateNextWindow) {
-        confirmGameQuit(new Runnable() {
-            @Override
-            public void run() {
-                FreeCell.super.close(activateNextWindow);
-            }
-        });
+        confirmGameQuit(() -> FreeCell.super.close(activateNextWindow));
     }
 
     private void confirmGameQuit(final Runnable action){
         if(state == PLAYING)
-            new MessageBox("空当接龙", "确实要退出这一局吗?", MessageBox.YESNO, MessageBox.QUESTION, new MessageBox.MsgResultListener() {
-                @Override
-                public void onMsgResult(int buttonNumber) {
-                    if(buttonNumber == YES)
-                        action.run();
-                }
+            new MessageBox("空当接龙", "确实要退出这一局吗?", MessageBox.YESNO, MessageBox.QUESTION, buttonNumber -> {
+                if(buttonNumber == MessageBox.MsgResultListener.YES)
+                    action.run();
             }, this);
         else
             action.run();
@@ -390,7 +454,7 @@ public class FreeCell extends Window {
                         pixels[i + width * j] = Color.rgb(0, 0, 168);
                         break;
                     case Color.MAGENTA:
-                        pixels[i + width * j] = red? Color.rgb(0, 168, 87) : Color.rgb(168, 0, 87); ;
+                        pixels[i + width * j] = red? Color.rgb(0, 168, 87) : Color.rgb(168, 0, 87);
                         break;
                     case Color.BLUE:
                         pixels[i + width * j] = Color.YELLOW;
@@ -474,7 +538,7 @@ public class FreeCell extends Window {
                     lastTouchTime = System.currentTimeMillis();
 
                 if(selectedStack == null){
-                    if(elements.size() > 0 && canBeSelected)
+                    if(!elements.isEmpty() && canBeSelected)
                         selectedStack = this;
                 }
                 else {
@@ -482,12 +546,9 @@ public class FreeCell extends Window {
                         moveCardsFromSelectedStack();
                     }
                     else if(selectedStack != this){
-                        new MessageBox("空当接龙", "对不起，不能这样移牌。", MessageBox.OK, MessageBox.INFO, new MessageBox.MsgResultListener() {
-                            @Override
-                            public void onMsgResult(int buttonNumber) {
-                                makeAutoMoves();
-                                selectedStack = null;
-                            }
+                        new MessageBox("空当接龙", "对不起，不能这样移牌。", MessageBox.OK, MessageBox.INFO, buttonNumber -> {
+                            makeAutoMoves();
+                            selectedStack = null;
                         }, FreeCell.this);
                     }
                     else {  // selectedStack = this
@@ -588,6 +649,7 @@ public class FreeCell extends Window {
         }
 
         void moveCardsFromSelectedStack(int numberOfMoving){
+            pushUndoState();
             for(int i = selectedStack.elements.size() - numberOfMoving; i < selectedStack.elements.size(); i++)
                 elements.add(selectedStack.elements.get(i));
             for(int i = 0; i < numberOfMoving; i++)
@@ -630,6 +692,7 @@ public class FreeCell extends Window {
                 for(int i = 8; i < 12; i++){
                     FreeCellStack freeCell = (FreeCellStack) FreeCell.this.elements.get(i);
                     if(freeCell.elements.isEmpty()){
+                        pushUndoState(); // 保存状态
                         freeCell.elements.add(pop());
                         makeAutoMoves();
                         return true;
@@ -714,12 +777,7 @@ public class FreeCell extends Window {
             gameNumberEdit = new TextBox(new Rect(70, 76, 117, 92), 2, 12, p, new Rect(-1, -11, 0, 2));
             gameNumberEdit.drawBorder = true;
             gameNumberEdit.isNumeric = true;
-            gameNumberEdit.enterRunnable = new Runnable() {
-                @Override
-                public void run() {
-                    apply();
-                }
-            };
+            gameNumberEdit.enterRunnable = this::apply;
             gameNumberEdit.setText(String.valueOf(randomGameNumber()));
             gameNumberEdit.selectAll();
             inputFocus = gameNumberEdit;
@@ -738,8 +796,8 @@ public class FreeCell extends Window {
             super.onNewDraw(canvas, x, y);
             p.setColor(Color.BLACK);
             p.setTextAlign(Paint.Align.CENTER);
-            canvas.drawText("选择游戏编号", x + width / 2, y + 42, p);
-            canvas.drawText("从 1 到 1000000", x + width / 2, y + 56, p);
+            canvas.drawText("选择游戏编号", x + (float) width / 2, y + 42, p);
+            canvas.drawText("从 1 到 1000000", x + (float) width / 2, y + 56, p);
             p.setTextAlign(Paint.Align.LEFT);
         }
 
