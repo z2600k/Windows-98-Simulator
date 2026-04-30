@@ -31,7 +31,7 @@ public class CheckBox extends Element {
             canvas.drawRect(x + 2, y + 2, x + 13 - 2, y + 13 - 2, p);
         }
         if(checked)
-            canvas.drawBitmap(checkBmp, x + 2, y + 2, null);
+            canvas.drawBitmap(checkBmp, x + 3, y + 3, null);
         p.setColor(Color.BLACK);
         canvas.drawText(text, x + 19, y + 11, p);
     }
